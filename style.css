@@ -1,313 +1,47 @@
-/* فونت سراسری */
-body {
-    font-family: 'Vazirmatn', sans-serif;
+/* --- استایل های پایه برای جلوگیری از خرابی ظاهر --- */
+body { 
+    font-family: Tahoma, sans-serif; 
+    direction: rtl; 
+    padding: 20px; 
     margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f0f0f0; /* رنگ پس‌زمینه پایه برای حالت روشن */
-    transition: background-color 0.5s ease;
-}
-
-/* --- دارک مود (پیش‌فرض) --- */
-body.dark-theme {
-    background-color: #1e1e2e; /* پس‌زمینه تیره */
-    color: #e0e0e0; /* متن روشن */
-}
-
-.music-player-container {
-    background: rgba(255, 255, 255, 0.05); /* پس‌زمینه تیره با شفافیت کم */
-    backdrop-filter: blur(10px);
-    border-radius: 25px;
-    padding: 30px;
-    width: 90%;
-    max-width: 900px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
-                inset 0 0 10px rgba(255, 255, 255, 0.1); /* سایه داخلی برای عمق */
-    display: flex;
-    gap: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-body.dark-theme .music-player-container {
-    background: rgba(30, 30, 46, 0.8);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 
-                inset 0 0 20px rgba(60, 60, 80, 0.5);
-}
-
-/* --- بخش اصلی پلیر --- */
-.main-player-section {
-    flex-grow: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 25px;
-    padding-right: 30px;
-    border-right: 1px solid rgba(100, 100, 100, 0.2);
-}
-
-body.dark-theme .main-player-section {
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-h2 {
-    font-size: 1.5em;
-    margin: 0;
-    text-align: center;
-    color: #4caf50; /* رنگ تأکید اصلی */
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-/* --- دکمه پخش/توقف (اصلی) --- */
-.play-pause-button {
-    width: 85px;
-    height: 85px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(145deg, #ffffff, #e6e6e6); /* گرادینت روشن */
+    background-color: #f9f9f9;
     color: #333;
-    box-shadow: 5px 5px 15px #c5c5c5, -5px -5px 15px #ffffff; /* سایه برجسته */
-    transition: all 0.2s ease;
 }
-
-body.dark-theme .play-pause-button {
-    background: linear-gradient(145deg, #2a2d3e, #171821); /* گرادینت تیره */
-    color: #4caf50;
-    box-shadow: 8px 8px 15px #13141b, -8px -8px 15px #2b2f41; /* سایه تیره */
-}
-
-.play-pause-button:hover {
-    transform: scale(1.05);
-}
-
-.play-pause-button svg {
-    transition: all 0.2s ease;
-}
-
-/* --- نوار پیشرفت --- */
-.seek-bar-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-}
-
-#seekBar {
-    width: 100%;
-    height: 8px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: #ddd;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.1s ease;
-}
-
-body.dark-theme #seekBar {
-    background: #3a3a50;
-}
-
-/* کاستومایز کردن نوار پیشرفت (Thumb) */
-#seekBar::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #4caf50; /* رنگ سبز */
-    cursor: grab;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    transition: all 0.1s ease;
-}
-
-body.dark-theme #seekBar::-webkit-slider-thumb {
-    background: #66bb6a;
-}
-
-#seekBar:active::-webkit-slider-thumb {
-    transform: scale(1.2);
-    background: #388e3c;
-}
-
-.time-display {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85em;
-    padding: 0 5px;
-}
-
-/* --- کنترل‌های ناوبری و آپلود --- */
-.controls {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
-
-.icon-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* حالت پیش‌فرض (روشن) آیکون‌ها */
-.icon-button svg {
-    fill: #555;
-}
-
-body.dark-theme .icon-button svg {
-    fill: #aaa;
-}
-
-.icon-button:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-body.dark-theme .icon-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* دکمه آپلود */
-.upload-button {
-    position: relative;
-    background: linear-gradient(145deg, #e0e0e0, #f0f0f0);
-    box-shadow: 4px 4px 8px #c5c5c5, -4px -4px 8px #ffffff;
-}
-
-body.dark-theme .upload-button {
-    background: linear-gradient(145deg, #2a2d3e, #171821);
-    box-shadow: 4px 4px 8px #13141b, -4px -4px 8px #2b2f41;
-}
-
-
-/* --- بخش لیست پخش --- */
-.playlist-section {
-    flex-basis: 300px;
-    padding-left: 15px;
-    overflow-y: auto;
-    max-height: 500px; /* محدودیت ارتفاع برای اسکرول */
-}
-
-.playlist-section h3 {
-    margin-top: 0;
-    border-bottom: 1px solid rgba(100, 100, 100, 0.2);
-    padding-bottom: 10px;
-    text-align: right;
-}
-
-body.dark-theme .playlist-section h3 {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.playlist {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.playlist-item {
-    padding: 12px 10px;
-    margin-bottom: 8px;
+.player-container {
+    max-width: 650px;
+    margin: 20px auto;
+    background: white;
+    padding: 25px;
     border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+h1 {
+    text-align: center;
+    color: #0056b3;
+    margin-bottom: 20px;
+}
+.controls button { 
+    padding: 10px 20px; 
+    margin: 5px; 
+    cursor: pointer; 
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #e9ecef;
+    transition: background-color 0.2s;
+}
+.controls button:hover { background-color: #d3d9df; }
+
+#playlist li { 
+    padding: 10px; 
+    border-bottom: 1px solid #eee; 
     cursor: pointer;
-    font-size: 0.95em;
-    display: flex;
-    justify-content: space-between;
-    background-color: rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
+    transition: background-color 0.2s;
 }
-
-body.dark-theme .playlist-item {
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
+#playlist li:hover { background-color: #f0f0f0; }
+#playlist li.active { 
+    background-color: #cce5ff; 
+    font-weight: bold; 
+    color: #004085;
 }
-
-.playlist-item:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-body.dark-theme .playlist-item:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
-}
-
-.playlist-item.active {
-    background: linear-gradient(45deg, #4caf5030, #2e7d3230); /* گرادینت سبز ملایم */
-    color: #4caf50;
-    font-weight: bold;
-    border: 1px solid #4caf50;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-}
-
-body.dark-theme .playlist-item.active {
-    background: linear-gradient(45deg, #4caf5060, #4caf5080);
-    color: #a5d6a7;
-}
-
-.track-name {
-    flex-grow: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.track-duration {
-    margin-right: 10px;
-    opacity: 0.7;
-}
-
-/* --- تم آیکون‌ها --- */
-.theme-toggle-area {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-}
-
-.theme-icon {
-    width: 24px;
-    height: 24px;
-    fill: #555;
-    transition: fill 0.2s ease;
-}
-
-body.dark-theme .theme-icon {
-    fill: #aaa;
-}
-
-/* تنظیم نهایی برای رسپانسیو شدن */
-@media (max-width: 768px) {
-    .music-player-container {
-        flex-direction: column;
-        padding: 20px;
-    }
-    .main-player-section {
-        border-right: none;
-        padding-right: 0;
-        border-bottom: 1px solid rgba(100, 100, 100, 0.2);
-        padding-bottom: 20px;
-    }
-    .playlist-section {
-        padding-left: 0;
-        max-height: 300px;
-    }
-    .theme-toggle-area {
-        top: 15px;
-        right: 15px;
-    }
-}
+audio { width: 100%; margin-bottom: 15px; }
+#trackTitle { font-weight: bold; }
