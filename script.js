@@ -1,202 +1,186 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- عناصر DOM ---
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const prevBtn = document.getElementById('prevBtn');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const trackTime = document.getElementById('trackTime');
-    const trackDuration = document.getElementById('trackDuration');
-    const progressBar = document.getElementById('progressBar');
-    const fileInput = document.getElementById('fileInput');
-    const addSongBtn = document.getElementById('addSongBtn');
-    const playlistUl = document.getElementById('playlist');
+// script.js - نسخه نهایی با گزارش‌گیری پیشرفته
 
-    // --- وضعیت پلیر ---
-    let playlist = [];
-    let currentTrackIndex = -1;
-    let isPlaying = false;
-    let audio = new Audio();
+const audio = document.querySelector('audio');
+const playPauseBtn = document.querySelector('#playPauseBtn'); // فرض بر وجود آیدی
+const nextBtn = document.querySelector('#nextBtn');           // فرض بر وجود آیدی
+const prevBtn = document.querySelector('#prevBtn');           // فرض بر وجود آیدی
+const playlistContainer = document.querySelector('#playlist'); // فرض بر وجود آیدی برای نمایش لیست
+const trackTitleElement = document.querySelector('#trackTitle'); // فرض بر وجود آیدی
 
-    // --- توابع کمکی ---
+const fileInput = document.querySelector('#fileInput'); // ورودی فایل برای افزودن آهنگ
 
-    // نمایش زمان در فرمت MM:SS
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
+let playlist = [];
+let currentTrackIndex = 0;
 
-    // به‌روزرسانی لیست پخش در UI
-    const renderPlaylist = () => {
-        playlistUl.innerHTML = '';
-        playlist.forEach((track, index) => {
-            const li = document.createElement('li');
-            li.textContent = track.name;
-            li.dataset.index = index;
-            if (index === currentTrackIndex) {
-                li.classList.add('playing');
+// =================================================================
+// توابع کمکی
+// =================================================================
+
+/**
+ * بارگذاری آهنگ بر اساس URL (چه blob و چه آدرس واقعی)
+ * @param {string} url - منبع آهنگ
+ */
+function loadTrack(url) {
+    console.log(`[DEBUG] Attempting to load track from URL: ${url}`);
+    audio.src = url;
+    audio.load(); // اجبار مرورگر به بارگذاری مجدد منبع
+    
+    // تلاش برای پخش خودکار (که ممکن است توسط مرورگر بلاک شود)
+    const playPromise = audio.play();
+
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            console.log("[SUCCESS] Track started playing automatically.");
+        }).catch(error => {
+            // این بخش معمولاً به دلیل سیاست‌های Autoplay مرورگر رخ می‌دهد
+            console.warn("[WARNING] Autoplay blocked. User must click play button.", error);
+            if (trackTitleElement) {
+                trackTitleElement.textContent = playlist[currentTrackIndex].name || "Ready to Play";
             }
-            // کلیک روی آیتم لیست برای پخش مستقیم
-            li.addEventListener('click', () => {
-                if (currentTrackIndex !== index) {
-                    currentTrackIndex = index;
-                    loadTrack(playlist[currentTrackIndex]);
-                    playPause();
-                    renderPlaylist(); // برای به‌روزرسانی کلاس 'playing'
-                }
-            });
-            playlistUl.appendChild(li);
+            // اطمینان از فعال بودن دکمه پخش
+            if (playPauseBtn) playPauseBtn.disabled = false;
         });
-    };
+    }
+}
 
-    // بارگذاری ترک جدید در پلیر صوتی
-    const loadTrack = (track) => {
-        if (track.url) {
-            audio.src = track.url;
-            document.getElementById('currentSongTitle').textContent = track.name;
-            // دکمه پخش را فعال کن
-            playPauseBtn.disabled = false;
-        } else {
-            // اگر ترک URL نداشت (مثلاً لیست خالی بود)
-            audio.src = '';
-            document.getElementById('currentSongTitle').textContent = "هیچ آهنگی انتخاب نشده";
-            playPauseBtn.disabled = true;
-        }
-    };
+/**
+ * بارگذاری آهنگ فعلی از لیست پخش
+ */
+function loadCurrentTrack() {
+    if (playlist.length === 0) {
+        console.log("[INFO] Playlist is empty. Disabling controls.");
+        if (playPauseBtn) playPauseBtn.disabled = true;
+        if (trackTitleElement) trackTitleElement.textContent = "No Track Loaded";
+        return;
+    }
 
-    // اجرای پخش یا توقف
-    const playPause = () => {
-        if (playlist.length === 0) return;
+    const track = playlist[currentTrackIndex];
+    if (track.url.startsWith('blob:')) {
+        // اگر URL موقتی باشد، مستقیماً استفاده می‌شود
+        loadTrack(track.url);
+    } else {
+        // اگر یک مسیر ثابت باشد (مثلاً 'music/song.mp3')، باید از آن استفاده کرد
+        loadTrack(track.url);
+    }
+    
+    if (playPauseBtn) playPauseBtn.disabled = false;
+    if (trackTitleElement) trackTitleElement.textContent = track.name || `Track ${currentTrackIndex + 1}`;
+}
 
-        if (isPlaying) {
-            audio.pause();
-            isPlaying = false;
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; // آیکون پخش
-        } else {
-            audio.play().catch(error => {
-                console.error("خطا در پخش خودکار:", error);
-                // این معمولاً به دلیل سیاست‌های Autoplay مرورگر است
-                alert("اجرای خودکار مسدود شد. لطفاً دکمه پخش را دوباره بزنید.");
-            });
-            isPlaying = true;
-            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; // آیکون توقف
-        }
-        renderPlaylist();
-    };
+// =================================================================
+// Event Listeners
+// =================================================================
 
-    // پخش آهنگ بعدی
-    const playNext = () => {
-        if (playlist.length === 0) return;
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        loadTrack(playlist[currentTrackIndex]);
-        if (isPlaying) {
-            audio.play();
-        }
-        renderPlaylist();
-    };
-
-    // پخش آهنگ قبلی
-    const playPrev = () => {
-        if (playlist.length === 0) return;
-        currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-        loadTrack(playlist[currentTrackIndex]);
-        if (isPlaying) {
-            audio.play();
-        }
-        renderPlaylist();
-    };
-
-    // --- رویدادهای Audio ---
-
-    audio.addEventListener('loadedmetadata', () => {
-        trackDuration.textContent = formatTime(audio.duration);
-        progressBar.max = audio.duration;
-    });
-
-    audio.addEventListener('timeupdate', () => {
-        if (!isNaN(audio.duration)) {
-            trackTime.textContent = formatTime(audio.currentTime);
-            progressBar.value = audio.currentTime;
-        }
-    });
-
-    audio.addEventListener('ended', playNext);
-
-    // --- رویدادهای UI ---
-
-    // کنترل پخش/توقف
-    playPauseBtn.addEventListener('click', playPause);
-
-    // کنترل آهنگ بعدی/قبلی
-    nextBtn.addEventListener('click', playNext);
-    prevBtn.addEventListener('click', playPrev);
-
-    // کنترل صدا
-    volumeSlider.addEventListener('input', (e) => {
-        audio.volume = e.target.value / 100;
-    });
-    audio.volume = volumeSlider.value / 100; // تنظیم اولیه
-
-    // کنترل نوار پیشرفت (کشیدن نوار)
-    progressBar.addEventListener('input', (e) => {
-        audio.currentTime = e.target.value;
-    });
-
-    // رویداد کلیک روی دکمه افزودن آهنگ (باز کردن File Dialog)
-    addSongBtn.addEventListener('click', () => {
-        fileInput.click();
-    });
-
-    // رویداد تغییر فایل (هنگامی که کاربر فایلی را انتخاب می‌کند)
-    fileInput.addEventListener('change', (e) => {
-        const files = e.target.files;
+// 1. مدیریت ورودی فایل جدید (آپلود)
+if (fileInput) {
+    fileInput.addEventListener('change', (event) => {
+        const files = event.target.files;
         if (files.length === 0) return;
 
-        let addedNewTrack = false;
+        console.log(`[DEBUG] ${files.length} file(s) selected.`);
 
         Array.from(files).forEach(file => {
-            // اطمینان از اینکه فایل یک فایل صوتی است (می‌توانید این بررسی را دقیق‌تر کنید)
-            if (file.type.startsWith('audio/')) {
-                
-                // **نکته مهم**: ما URL.createObjectURL را اینجا ایجاد می‌کنیم تا فایل در حافظه مرورگر بماند.
-                const trackUrl = URL.createObjectURL(file); 
-                const trackName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                
-                playlist.push({
-                    file: file, // ارجاع به آبجکت فایل اصلی (فقط برای نگهداری در لیست)
-                    name: trackName,
-                    url: trackUrl // URL موقت برای پخش
-                });
-                addedNewTrack = true;
-            } else {
-                console.warn(`فایل نادیده گرفته شد، نوع فایل صوتی نیست: ${file.name}`);
+            // ایجاد URL موقت برای فایل محلی
+            const trackUrl = URL.createObjectURL(file);
+            
+            playlist.push({
+                name: file.name,
+                url: trackUrl
+            });
+            console.log(`[SUCCESS] Added track to playlist: ${file.name}`);
+
+            // اگر اولین آهنگ است، آن را بارگذاری کن
+            if (playlist.length === 1) {
+                currentTrackIndex = 0;
+                loadCurrentTrack();
             }
         });
-        
-        // اگر ترک جدید اضافه شد و هیچ ترک فعالی نبود، اولین ترک اضافه شده را لود کن
-        if (addedNewTrack && currentTrackIndex === -1) {
-            currentTrackIndex = playlist.length - files.length; // اندیس اولین ترک جدید
-            loadTrack(playlist[currentTrackIndex]);
-        }
-        
-        renderPlaylist();
-        // ریست کردن ورودی فایل برای امکان انتخاب مجدد فایل‌های تکراری
-        e.target.value = null; 
-    });
 
-    // --- مقداردهی اولیه ---
-    if (playlist.length === 0) {
-        playPauseBtn.disabled = true;
-        document.getElementById('currentSongTitle').textContent = "لطفاً با دکمه 'افزودن آهنگ' فایل اضافه کنید.";
+        // آپدیت بصری لیست پخش (اگر وجود داشته باشد)
+        updatePlaylistDisplay();
+        
+        // ریست کردن ورودی فایل تا بتوان فایل تکراری را مجدداً انتخاب کرد
+        fileInput.value = ''; 
+    });
+} else {
+    console.error("[FATAL ERROR] Could not find file input element with ID 'fileInput'. Cannot load new tracks.");
+}
+
+
+// 2. مدیریت دکمه پخش/توقف
+if (playPauseBtn) {
+    playPauseBtn.addEventListener('click', () => {
+        if (playlist.length === 0) {
+             console.warn("[ACTION BLOCKED] Cannot play. Playlist is empty. Please add a track.");
+             return;
+        }
+
+        if (audio.paused) {
+            audio.play().catch(e => console.error("Error trying to play:", e));
+            playPauseBtn.textContent = '❚❚'; // یا آیکون توقف
+        } else {
+            audio.pause();
+            playPauseBtn.textContent = '▶'; // یا آیکون پخش
+        }
+    });
+}
+
+// 3. مدیریت دکمه‌های Next/Prev
+if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+        if (playlist.length === 0) return;
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        loadCurrentTrack();
+    });
+}
+
+if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+        if (playlist.length === 0) return;
+        currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+        loadCurrentTrack();
+    });
+}
+
+// 4. مدیریت پایان آهنگ
+audio.addEventListener('ended', () => {
+    console.log("[INFO] Current track ended. Skipping to next.");
+    if (nextBtn) {
+        nextBtn.click(); // استفاده از کلیک دکمه برای اجرای منطق Next
+    } else {
+        // اگر دکمه Next نداریم، به اول برمی‌گردیم
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        loadCurrentTrack();
     }
-    renderPlaylist();
 });
 
-// پاکسازی URLهای ایجاد شده هنگام بسته شدن صفحه برای جلوگیری از نشت حافظه
+// 5. پاکسازی حافظه (بسیار مهم برای URLهای موقت)
 window.addEventListener('beforeunload', () => {
     playlist.forEach(track => {
-        if (track.url && track.url.startsWith('blob:')) {
+        if (track.url.startsWith('blob:')) {
             URL.revokeObjectURL(track.url);
+            console.log(`[CLEANUP] Revoked object URL for: ${track.name}`);
         }
     });
 });
+
+// 6. تابع کمکی برای نمایش لیست (باید بر اساس HTML شما سفارشی شود)
+function updatePlaylistDisplay() {
+    if (!playlistContainer) return;
+    playlistContainer.innerHTML = '';
+    playlist.forEach((track, index) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${index + 1}. ${track.name}`;
+        if (index === currentTrackIndex) {
+            listItem.style.fontWeight = 'bold';
+        }
+        listItem.addEventListener('click', () => {
+            currentTrackIndex = index;
+            loadCurrentTrack();
+        });
+        playlistContainer.appendChild(listItem);
+    });
+}
+
+// تنظیم اولیه (اگر فایلی از قبل در لیست بود)
+loadCurrentTrack();
