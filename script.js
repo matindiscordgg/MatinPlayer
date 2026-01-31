@@ -1,15 +1,15 @@
 // =================================================================
-// Player Script - Final Refined Version
+// Player Script - Consolidated & Refined Version
 // =================================================================
 
-const audio = document.querySelector('audio');
+// --- DOM Element Selections ---
+const audio = document.querySelector('audio') || new Audio(); // fallback in case audio tag isn't present initially
 const playPauseBtn = document.querySelector('#playPauseBtn');
 const nextBtn = document.querySelector('#nextBtn');
 const prevBtn = document.querySelector('#prevBtn');
 const playlistContainer = document.querySelector('#playlist');
 const trackTitle = document.querySelector('#trackTitle');
-
-// FIX: Correctly select the file input using its ID 'audioFile'
+// *** اصلاح کلیدی: انتخابگر آیدی به درستی روی 'audioFile' تنظیم شد ***
 const fileInput = document.querySelector('#audioFile'); 
 
 let playlist = [];
@@ -34,11 +34,10 @@ function updatePlaylistUI() {
         li.textContent = `${index + 1}. ${track.name}`;
         li.dataset.index = index;
         if (index === currentTrackIndex) {
-            li.classList.add('active'); // Highlight current track
+            li.classList.add('active'); 
         }
-        li.addEventListener('click', () => {
-            loadTrack(index);
-        });
+        // Use an anonymous function wrapper for index passing
+        li.addEventListener('click', () => loadTrack(index));
         playlistContainer.appendChild(li);
     });
 }
@@ -54,23 +53,23 @@ function loadTrack(index) {
     const track = playlist[index];
 
     if (audio) {
-        // Revoke previous object URL before setting a new one to clean memory
+        // Revoke previous object URL
         if (audio.src && audio.src.startsWith('blob:')) {
              URL.revokeObjectURL(audio.src);
         }
         
         audio.src = track.url;
-        trackTitle.textContent = track.name;
+        if(trackTitle) trackTitle.textContent = track.name;
         audio.load();
 
-        // Attempt to play. User gesture is usually required.
+        // Attempt to play
         const playPromise = audio.play();
 
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 if (playPauseBtn) playPauseBtn.textContent = 'Pause';
             }).catch(error => {
-                // Autoplay blocked by browser
+                // Autoplay blocked: user must click play button later
                 if (playPauseBtn) playPauseBtn.textContent = 'Play';
             });
         }
@@ -85,7 +84,7 @@ function loadCurrentTrack() {
 
 // Function to toggle play/pause
 function togglePlayPause() {
-    if (!audio) return;
+    if (!audio || playlist.length === 0) return;
     if (audio.paused) {
         audio.play().then(() => {
             if (playPauseBtn) playPauseBtn.textContent = 'Pause';
@@ -110,31 +109,34 @@ function prevTrack() {
     loadCurrentTrack();
 }
 
+// --- File Input Trigger Function (For HTML Button Call) ---
+function triggerFileInput() {
+    if (fileInput) {
+        fileInput.click(); // This forcibly opens the file selection dialog
+    } else {
+        console.error("Error: File Input element with ID 'audioFile' not found.");
+    }
+}
+
+
 // --- Event Listeners for Player Controls ---
 if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
 if (nextBtn) nextBtn.addEventListener('click', nextTrack);
 if (prevBtn) prevBtn.addEventListener('click', prevTrack);
 
 if (audio) {
-    audio.addEventListener('ended', nextTrack); // Play next on end
-    
-    audio.addEventListener('loadedmetadata', () => {
-        // Optional: Update duration display
-    });
+    audio.addEventListener('ended', nextTrack); 
 }
 
-// --- File Input Handling (The core fix) ---
+// --- File Input Handling ---
 if (fileInput) {
     fileInput.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Clear existing playlist and reset index
-        // IMPORTANT: Before creating new blob URLs, revoke old ones if they exist.
+        // Cleanup previous files' URLs
         playlist.forEach(track => {
-            if (track.url && track.url.startsWith('blob:')) {
-                URL.revokeObjectURL(track.url);
-            }
+            if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
         });
         playlist = []; 
         currentTrackIndex = -1;
@@ -142,7 +144,7 @@ if (fileInput) {
         files.filter(file => file.type.startsWith('audio/')).forEach(file => {
             playlist.push({
                 name: file.name,
-                url: URL.createObjectURL(file), // Create new blob URL
+                url: URL.createObjectURL(file), 
                 duration: 0
             });
         });
@@ -151,7 +153,7 @@ if (fileInput) {
             currentTrackIndex = 0;
             loadCurrentTrack();
         } else {
-            trackTitle.textContent = "No valid audio files were selected.";
+            if(trackTitle) trackTitle.textContent = "No valid audio files were selected.";
         }
         updatePlaylistUI();
     });
@@ -168,11 +170,9 @@ function initializePlayer() {
 
 document.addEventListener('DOMContentLoaded', initializePlayer);
 
-// Cleanup: Revoke object URLs when the window is closed
+// Cleanup on window close
 window.addEventListener('beforeunload', () => {
     playlist.forEach(track => {
-        if (track.url && track.url.startsWith('blob:')) {
-            URL.revokeObjectURL(track.url);
-        }
+        if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
     });
 });
