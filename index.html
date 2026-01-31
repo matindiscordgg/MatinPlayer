@@ -3,199 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پخش‌کننده صوتی</title>
-    <style>
-        /* استایل بسیار پایه برای خوانایی */
-        body { font-family: Tahoma, sans-serif; direction: rtl; padding: 15px; }
-        .controls button { padding: 10px; margin: 5px; cursor: pointer; }
-        #playlist li { padding: 5px; border-bottom: 1px dotted #ccc; cursor: pointer; }
-        #playlist li.active { background-color: #eee; font-weight: bold; }
-    </style>
+    <title>پخش‌کننده صوتی نهایی</title>
+    <!-- لینک به فایل استایل خارجی -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="player-container">
-        <h1>پخش کننده موسیقی</h1>
+        <h1>پخش‌کننده موسیقی</h1>
 
-        <!-- 1. المان صوتی (برای سادگی از آیدی پیش‌فرض استفاده می‌کنیم) -->
+        <!-- المان صوتی با شناسه 'audioElement' -->
         <audio id="audioElement" controls></audio> 
 
-        <!-- 2. اطلاعات آهنگ فعلی -->
+        <!-- اطلاعات آهنگ فعلی -->
         <div style="margin-bottom: 15px;">
-            <strong>عنوان آهنگ:</strong> <span id="trackTitle">در انتظار فایل...</span>
+            <strong>عنوان آهنگ:</strong> <span id="trackTitle">فایلی بارگذاری نشده است...</span>
         </div>
 
-        <!-- 3. دکمه های کنترل پخش -->
-        <div class="controls" style="margin-bottom: 20px;">
+        <!-- دکمه های کنترل پخش -->
+        <div class="controls" style="text-align: center; margin-bottom: 25px;">
             <button id="prevBtn">قبلی</button>
             <button id="playPauseBtn">Play</button>
             <button id="nextBtn">بعدی</button>
         </div>
 
-        <!-- 4. دکمه انتخاب فایل (که اکنون تابع JS را فراخوانی می کند) -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <button type="button" onclick="triggerFileInput()">انتخاب فایل صوتی</button>
+        <!-- دکمه انتخاب فایل که triggerFileInput() را فراخوانی می کند -->
+        <div style="text-align: center; margin-bottom: 25px;">
+            <button type="button" onclick="triggerFileInput()" style="background-color: #28a745; color: white; border: none; padding: 12px 25px; cursor: pointer;">
+                انتخاب فایل صوتی
+            </button>
         </div>
 
-        <!-- 5. لیست پخش -->
+        <!-- لیست پخش -->
         <div id="playlist-section">
             <h3>لیست پخش</h3>
-            <ul id="playlist">
+            <ul id="playlist" style="list-style: none; padding: 0;">
                 <li>(لیست خالی است)</li>
             </ul>
         </div>
-
     </div>
 
-    <!-- 6. ورودی فایل (باید مخفی باشد و آیدی دقیق 'audioFile' را داشته باشد) -->
-    <input type="file" id="audioFile" accept="audio/*" multiple style="display: none;">
+    <!-- ورودی فایل مخفی: از موقعیت‌یابی مطلق استفاده می شود تا کلیک روی آن ممکن باشد -->
+    <input type="file" id="audioFile" accept="audio/*" multiple 
+           style="position: absolute; left: -9999px; top: -9999px; opacity: 0;">
 
-    <!-- 7. کد جاوا اسکریپت درونی -->
-    <script>
-        // --- DOM Element Selections ---
-        const audio = document.querySelector('#audioElement'); // تغییر آیدی به audioElement
-        const playPauseBtn = document.querySelector('#playPauseBtn');
-        const nextBtn = document.querySelector('#nextBtn');
-        const prevBtn = document.querySelector('#prevBtn');
-        const playlistContainer = document.querySelector('#playlist');
-        const trackTitle = document.querySelector('#trackTitle');
-        const fileInput = document.querySelector('#audioFile'); // آیدی ورودی فایل
-
-        let playlist = [];
-        let currentTrackIndex = -1;
-
-        // --- Helper Functions ---
-        function updatePlaylistUI() {
-            if (!playlistContainer) return;
-            playlistContainer.innerHTML = ''; 
-            if (playlist.length === 0) {
-                 playlistContainer.innerHTML = '<li>(لیست خالی است)</li>';
-                 return;
-            }
-            playlist.forEach((track, index) => {
-                const li = document.createElement('li');
-                li.textContent = `${index + 1}. ${track.name}`;
-                li.dataset.index = index;
-                if (index === currentTrackIndex) {
-                    li.classList.add('active'); 
-                }
-                li.addEventListener('click', () => loadTrack(index));
-                playlistContainer.appendChild(li);
-            });
-        }
-
-        function loadTrack(index) {
-            if (index < 0 || index >= playlist.length) return;
-
-            currentTrackIndex = index;
-            const track = playlist[index];
-
-            if (audio) {
-                if (audio.src && audio.src.startsWith('blob:')) URL.revokeObjectURL(audio.src);
-                
-                audio.src = track.url;
-                if(trackTitle) trackTitle.textContent = track.name;
-                audio.load();
-
-                audio.play().catch(error => {
-                    if (playPauseBtn) playPauseBtn.textContent = 'Play (کلیک کنید)';
-                });
-            }
-            updatePlaylistUI();
-        }
-
-        function loadCurrentTrack() {
-            loadTrack(currentTrackIndex);
-        }
-
-        function togglePlayPause() {
-            if (!audio || playlist.length === 0) return;
-            if (audio.paused) {
-                audio.play().then(() => {
-                    if (playPauseBtn) playPauseBtn.textContent = 'Pause';
-                }).catch(_ => { /* Handle blocked play */ });
-            } else {
-                audio.pause();
-                if (playPauseBtn) playPauseBtn.textContent = 'Play';
-            }
-        }
-
-        function nextTrack() {
-            if (playlist.length === 0) return;
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            loadCurrentTrack();
-        }
-
-        function prevTrack() {
-            if (playlist.length === 0) return;
-            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-            loadCurrentTrack();
-        }
-
-        // *** این تابع کلید رفع مشکل است ***
-        function triggerFileInput() {
-            if (fileInput) {
-                fileInput.click(); 
-                console.log("File input clicked successfully.");
-            } else {
-                console.error("Error: File Input element with ID 'audioFile' not found.");
-            }
-        }
-
-
-        // --- Event Listeners ---
-        if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
-        if (nextBtn) nextBtn.addEventListener('click', nextTrack);
-        if (prevBtn) prevBtn.addEventListener('click', prevTrack);
-
-        if (audio) {
-            audio.addEventListener('ended', nextTrack); 
-        }
-
-        // --- File Input Handling ---
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length === 0) return;
-
-                playlist.forEach(track => {
-                    if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
-                });
-                playlist = []; 
-                currentTrackIndex = -1;
-
-                files.filter(file => file.type.startsWith('audio/')).forEach(file => {
-                    playlist.push({
-                        name: file.name,
-                        url: URL.createObjectURL(file), 
-                    });
-                });
-
-                if (playlist.length > 0) {
-                    currentTrackIndex = 0;
-                    loadCurrentTrack();
-                } else {
-                    if(trackTitle) trackTitle.textContent = "هیچ فایل صوتی معتبری انتخاب نشد.";
-                }
-                updatePlaylistUI();
-            });
-        } else {
-            console.error("FATAL ERROR: File input element with ID 'audioFile' not found in HTML.");
-        }
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            if (playPauseBtn) playPauseBtn.textContent = 'Play';
-            updatePlaylistUI();
-        });
-
-        // Cleanup on window close
-        window.addEventListener('beforeunload', () => {
-            playlist.forEach(track => {
-                if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
-            });
-        });
-    </script>
-
+    <!-- لینک به فایل جاوا اسکریپت خارجی -->
+    <script src="script.js"></script>
 </body>
 </html>
