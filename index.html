@@ -1,54 +1,69 @@
 <!DOCTYPE html>
-<html lang="fa" data-theme="light">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matin Player PWA</title>
+    <title>Matin Player</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <!-- برای اطمینان از پشتیبانی بهتر در آیفون -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- آیکون‌های SVG (می‌توانید از کتابخانه‌های آیکون مانند Font Awesome هم استفاده کنید) -->
+    <!-- اینجا از SVGهای ساده استفاده شده است -->
 </head>
-<body data-theme="light">
-
+<body>
     <div class="player-container">
-        <!-- دکمه تغییر تم (حالت روز/شب) -->
         <header>
-            <button id="themeToggle" class="icon-button">☀️</button>
             <h2>Matin Player</h2>
+            <button class="theme-toggle-button" id="themeToggle" aria-label="تغییر تم">
+                <!-- آیکون تم بر اساس وضعیت فعلی تنظیم خواهد شد -->
+                <svg class="icon-theme-dark" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-15c-3.314 0-6 2.686-6 6s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm0 10c-1.654 0-3-1.346-3-3s1.346-3 3-3 3 1.346 3 3-1.346 3-3 3z"/>
+                </svg>
+            </button>
         </header>
 
         <div class="track-info">
-            <p id="currentTrackTitle">هیچ آهنگی انتخاب نشده است</p>
+            <div id="currentTrackTitle">هیچ آهنگی انتخاب نشده است</div>
+            <!-- <div class="artist-name">نام هنرمند</div> -->
         </div>
 
-        <!-- پلیر اصلی -->
-        <audio id="mainAudioPlayer"></audio>
-        
-        <!-- نوار پیشرفت -->
         <div class="progress-section">
             <input type="range" id="seekBar" value="0" min="0" max="100">
             <div class="time-display">
                 <span id="currentTime">0:00</span>
-                <span id="durationTime">0:00</span>
+                <span id="duration">0:00</span>
             </div>
         </div>
 
-        <!-- کنترل‌ها -->
         <div class="controls">
-            <button id="prevButton" class="control-button">⏮️</button>
-            <button id="playPauseButton" class="control-button large">▶️</button>
-            <button id="nextButton" class="control-button">⏭️</button>
+            <button class="control-button" id="prevButton" aria-label="قبلی">
+                <svg class="icon-prev" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 18.1V5.9c0-0.7 0.8-1.2 1.5-0.8l5.9 5.1c0.4 0.3 0.4 0.9 0 1.2l-5.9 5.1c-0.7 0.4-1.5-0.1-1.5-0.8zm-10 0V5.9c0-0.7 0.8-1.2 1.5-0.8l5.9 5.1c0.4 0.3 0.4 0.9 0 1.2l-5.9 5.1c-0.7 0.4-1.5-0.1-1.5-0.8z"/>
+                </svg>
+            </button>
+            <button class="play-pause-button" id="playPauseButton" aria-label="پخش/توقف">
+                <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 6.827v10.347c0 0.791 0.874 1.312 1.565 0.874l8.325-5.173c0.647-0.403 0.647-1.293 0-1.696L9.565 5.953C8.874 5.521 8 6.034 8 6.827z"/>
+                </svg>
+                 <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                    <path d="M9 20c0 1.105-0.895 2-2 2s-2-0.895-2-2V4c0-1.105 0.895-2 2-2s2 0.895 2 2V20zM17 4c0-1.105-0.895-2-2-2s-2 0.895-2 2v16c0 1.105 0.895 2 2 2s2-0.895 2-2V4z"/>
+                </svg>
+            </button>
+            <button class="control-button" id="nextButton" aria-label="بعدی">
+                <svg class="icon-next" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.5 18.1V5.9c0-0.7-0.8-1.2-1.5-0.8L0.8 10.9c-0.4 0.3-0.4 0.9 0 1.2L6 19.7c0.7 0.4 1.5-0.1 1.5-0.8zM19.5 18.1V5.9c0-0.7-0.8-1.2-1.5-0.8L12.8 10.9c-0.4 0.3-0.4 0.9 0 1.2L18 19.7c0.7 0.4 1.5-0.1 1.5-0.8z"/>
+                </svg>
+            </button>
         </div>
 
-        <!-- دکمه انتخاب فایل (برای افزودن آهنگ) -->
         <div class="file-input-section">
-             <button id="openFileButton" class="action-button">
-                <span class="icon">📂</span> انتخاب فایل صوتی
+            <button class="action-button" id="openFileButton">
+                <svg class="icon-upload" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.4 15.37a1.5 1.5 0 0 0-1.5 1.5v3.71a1.5 1.5 0 0 1-1.5 1.5H6.6a1.5 1.5 0 0 1-1.5-1.5V16.87a1.5 1.5 0 0 0-3 0v3.71a4.5 4.5 0 0 0 4.5 4.5h9.8a4.5 4.5 0 0 0 4.5-4.5v-3.71a1.5 1.5 0 0 0-1.5-1.5zm-7.9 1.03a1.5 1.5 0 0 0 1.5 1.5h4.5a1.5 1.5 0 0 0 0-3h-4.5a1.5 1.5 0 0 0-1.5 1.5zm2.6-7.15a1.5 1.5 0 0 0-1.5-1.5h-4.5a1.5 1.5 0 0 0 0 3h4.5a1.5 1.5 0 0 0 1.5-1.5zm-6.5 3.5a1.5 1.5 0 0 0-1.5 1.5v3.71a1.5 1.5 0 0 0 1.5 1.5h6.9a1.5 1.5 0 0 0 1.5-1.5v-3.71a1.5 1.5 0 0 0-1.5-1.5H7.5z"/>
+                </svg>
+                <span>انتخاب فایل صوتی</span>
             </button>
+            <!-- ورودی فایل مخفی -->
             <input type="file" id="audioFile" accept="audio/*" style="display: none;">
         </div>
-
     </div>
 
     <script src="script.js"></script>
