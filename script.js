@@ -1,127 +1,194 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const audioPlayer = document.getElementById('mainAudioPlayer');
+    const audioFile = document.getElementById('audioFile');
+    const openFileButton = document.getElementById('openFileButton');
     const playPauseButton = document.getElementById('playPauseButton');
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
     const seekBar = document.getElementById('seekBar');
     const currentTimeDisplay = document.getElementById('currentTime');
-    const durationTimeDisplay = document.getElementById('durationTime');
+    const durationDisplay = document.getElementById('duration');
     const currentTrackTitle = document.getElementById('currentTrackTitle');
-    
-    // ** کنترل تم **
     const themeToggle = document.getElementById('themeToggle');
     const body = document.body;
-    const storedTheme = localStorage.getItem('theme');
 
-    // تابع تنظیم تم
-    const setTheme = (theme) => {
+    // آیکون‌های پخش/توقف
+    const playIcon = playPauseButton.querySelector('.icon-play');
+    const pauseIcon = playPauseButton.querySelector('.icon-pause');
+
+    // آیکون‌های تم
+    const themeDarkIcon = themeToggle.querySelector('.icon-theme-dark');
+    const themeLightIcon = themeToggle.querySelector('.icon-theme-light');
+
+    let audio = null;
+    let isPlaying = false;
+    let currentTrackIndex = -1;
+    let playlist = []; // لیستی برای نگهداری فایل‌های انتخاب شده
+
+    // تابع برای فرمت زمان (مثلاً 0:00)
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        const formattedSeconds = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds;
+        return `${minutes}:${formattedSeconds}`;
+    }
+
+    // تابع برای تنظیم تم
+    function setTheme(theme) {
         if (theme === 'dark') {
             body.setAttribute('data-theme', 'dark');
-            themeToggle.textContent = '🌙'; // آیکون ماه برای حالت تاریک
+            themeDarkIcon.style.display = 'none';
+            themeLightIcon.style.display = 'block';
         } else {
-            body.setAttribute('data-theme', 'light');
-            themeToggle.textContent = '☀️'; // آیکون خورشید برای حالت روشن
+            body.removeAttribute('data-theme');
+            themeDarkIcon.style.display = 'block';
+            themeLightIcon.style.display = 'none';
         }
-        localStorage.setItem('theme', theme);
-    };
-
-    // تنظیم اولیه تم بر اساس localStorage یا تنظیمات سیستم
-    if (storedTheme) {
-        setTheme(storedTheme);
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-    } else {
-        setTheme('light');
+        localStorage.setItem('playerTheme', theme);
     }
 
-    // شنونده کلیک برای تغییر تم
+    // بارگذاری تم ذخیره شده در Local Storage
+    const savedTheme = localStorage.getItem('playerTheme') || 'light';
+    setTheme(savedTheme);
+
+    // رویداد کلیک دکمه تم
     themeToggle.addEventListener('click', () => {
         const currentTheme = body.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-    });
-
-
-    // ** کنترل پخش **
-    let isPlaying = false;
-    let audioQueue = []; // صف پخش (هنوز برای چند آهنگ استفاده نمی‌شود، اما برای آینده)
-
-    playPauseButton.addEventListener('click', () => {
-        if (audioPlayer.src) {
-            if (isPlaying) {
-                audioPlayer.pause();
-                playPauseButton.textContent = '▶️';
-            } else {
-                audioPlayer.play();
-                playPauseButton.textContent = '⏸️';
-            }
-            isPlaying = !isPlaying;
+        if (currentTheme === 'dark') {
+            setTheme('light');
+        } else {
+            setTheme('dark');
         }
     });
 
-    // به‌روزرسانی نوار پیشرفت
-    audioPlayer.addEventListener('timeupdate', () => {
-        if (!seekBar.hasAttribute('max')) {
-            // اگر ماکسیمم تنظیم نشده، تنظیم می‌کنیم
-            seekBar.max = audioPlayer.duration;
-        }
-        seekBar.value = audioPlayer.currentTime;
-        currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
-    });
-
-    // تغییر آهنگ بر اساس نوار پیشرفت
-    seekBar.addEventListener('input', () => {
-        audioPlayer.currentTime = seekBar.value;
-    });
-
-    // تنظیم طول آهنگ
-    audioPlayer.addEventListener('loadedmetadata', () => {
-        durationTimeDisplay.textContent = formatTime(audioPlayer.duration);
-        seekBar.max = audioPlayer.duration;
-    });
-    
-    // تابع کمکی برای فرمت زمان
-    function formatTime(seconds) {
-        const min = Math.floor(seconds / 60);
-        const sec = Math.floor(seconds % 60);
-        return `${min}:${sec.toString().padStart(2, '0')}`;
-    }
-
-    // ** کنترل فایل (جدید) **
-    const openFileButton = document.getElementById('openFileButton');
-    const audioFile = document.getElementById('audioFile');
-
-    // کلیک روی دکمه ظاهر، ورودی فایل مخفی را فعال می‌کند
+    // رویداد کلیک برای دکمه انتخاب فایل
     openFileButton.addEventListener('click', () => {
         audioFile.click();
     });
 
-    // بارگذاری فایل انتخاب شده
+    // رویداد تغییر فایل انتخاب شده
     audioFile.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            // در آیفون، متأسفانه ما نمی‌توانیم فایل‌ها را به صورت پایدار در حافظه اپلیکیشن ذخیره کنیم
-            // این راه حل فقط تا زمانی که مرورگر باز است کار می‌کند.
-            const fileURL = URL.createObjectURL(file);
-            audioPlayer.src = fileURL;
-            
-            // نمایش نام فایل به جای عنوان پیش‌فرض
-            currentTrackTitle.textContent = file.name;
-            
-            // شروع پخش
-            audioPlayer.play();
-            isPlaying = true;
-            playPauseButton.textContent = '⏸️';
-
-            // در اینجا می‌توانید منطق صف پخش (audioQueue) را برای اضافه کردن این فایل پیاده‌سازی کنید.
+        const files = Array.from(event.target.files); // تبدیل FileList به آرایه
+        if (files.length > 0) {
+            playlist = files.map(file => URL.createObjectURL(file));
+            currentTrackIndex = 0;
+            loadTrack(currentTrackIndex);
+            event.target.value = ''; // پاک کردن مقدار ورودی فایل
         }
     });
-    
-    // ** کنترل‌های Next/Prev (فعلاً فقط برای ساختار اضافه شده‌اند) **
-    document.getElementById('prevButton').addEventListener('click', () => {
-        alert('عملکرد پخش قبلی هنوز کامل نشده است.');
-        // اینجا باید منطق پخش آهنگ قبلی در audioQueue اضافه شود.
+
+    // تابع بارگذاری آهنگ
+    function loadTrack(index) {
+        if (index >= 0 && index < playlist.length) {
+            const trackUrl = playlist[index];
+            const trackName = (audioFile.files && audioFile.files[index]) ? audioFile.files[index].name : `Track ${index + 1}`;
+
+            if (audio) {
+                audio.pause();
+                audio.src = '';
+                audio = null; // حذف نمونه قبلی
+            }
+
+            audio = new Audio(trackUrl);
+            currentTrackTitle.textContent = trackName;
+            isPlaying = false;
+            playPauseButton.innerHTML = ''; // پاک کردن محتوای قبلی
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            playPauseButton.appendChild(playIcon);
+
+            audio.addEventListener('loadedmetadata', () => {
+                durationDisplay.textContent = formatTime(audio.duration);
+                seekBar.max = audio.duration;
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                seekBar.value = audio.currentTime;
+                currentTimeDisplay.textContent = formatTime(audio.currentTime);
+                if (!isPlaying) { // اگر در حالت مکث بود و آهنگ شروع به پخش کرد
+                     playIcon.style.display = 'none';
+                     pauseIcon.style.display = 'block';
+                     playPauseButton.appendChild(pauseIcon);
+                     isPlaying = true;
+                }
+            });
+
+            audio.addEventListener('ended', () => {
+                playNextTrack();
+            });
+
+            // پخش خودکار پس از بارگذاری متا داده‌ها
+            audio.play().then(() => {
+                 playIcon.style.display = 'none';
+                 pauseIcon.style.display = 'block';
+                 playPauseButton.appendChild(pauseIcon);
+                 isPlaying = true;
+            }).catch(error => {
+                console.error("Autoplay failed:", error);
+                // ممکن است نیاز به تعامل کاربر برای شروع پخش باشد
+                currentTrackTitle.textContent = "خطا در پخش، لطفاً روی دکمه پخش بزنید.";
+                isPlaying = false;
+            });
+        } else {
+            currentTrackTitle.textContent = "پلی‌لیست خالی است یا آهنگ نامعتبر.";
+            currentTimeDisplay.textContent = "0:00";
+            durationDisplay.textContent = "0:00";
+            seekBar.value = 0;
+            playPauseButton.innerHTML = '';
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            playPauseButton.appendChild(playIcon);
+            isPlaying = false;
+            playlist = [];
+            currentTrackIndex = -1;
+        }
+    }
+
+
+    // تابع پخش/توقف
+    playPauseButton.addEventListener('click', () => {
+        if (!audio) return;
+
+        if (isPlaying) {
+            audio.pause();
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            isPlaying = false;
+        } else {
+            audio.play().then(() => {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                isPlaying = true;
+            }).catch(error => {
+                console.error("Play failed:", error);
+                currentTrackTitle.textContent = "پخش امکان‌پذیر نیست. لطفاً فایل صوتی دیگری انتخاب کنید.";
+            });
+        }
+         // به‌روزرسانی نمایش آیکون‌ها
+         playPauseButton.appendChild(isPlaying ? pauseIcon : playIcon);
     });
-    document.getElementById('nextButton').addEventListener('click', () => {
-        alert('عملکرد پخش بعدی هنوز کامل نشده است.');
-        // اینجا باید منطق پخش آهنگ بعدی در audioQueue اضافه شود.
+
+
+    // رویداد تغییر نوار پیشرفت
+    seekBar.addEventListener('input', () => {
+        if (audio) {
+            audio.currentTime = seekBar.value;
+        }
     });
+
+    // توابع برای آهنگ قبلی و بعدی
+    function playPrevTrack() {
+        if (playlist.length === 0) return;
+        currentTrackIndex = (currentTrackIndex - 1 - playlist.length) % playlist.length;
+        loadTrack(currentTrackIndex);
+    }
+
+    function playNextTrack() {
+        if (playlist.length === 0) return;
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        loadTrack(currentTrackIndex);
+    }
+
+    prevButton.addEventListener('click', playPrevTrack);
+    nextButton.addEventListener('click', playNextTrack);
+
 });
