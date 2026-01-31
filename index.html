@@ -54,13 +54,14 @@
             </button>
         </div>
 
-        <div class="file-input-section">
-            <button class="action-button" id="openFileButton">
+                <div class="file-input-section">
+            <!-- از label به جای button استفاده کنید و آن را به input لینک دهید -->
+            <label for="audioFile" class="action-button">
                 <svg class="icon-upload" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.4 15.37a1.5 1.5 0 0 0-1.5 1.5v3.71a1.5 1.5 0 0 1-1.5 1.5H6.6a1.5 1.5 0 0 1-1.5-1.5V16.87a1.5 1.5 0 0 0-3 0v3.71a4.5 4.5 0 0 0 4.5 4.5h9.8a4.5 4.5 0 0 0 4.5-4.5v-3.71a1.5 1.5 0 0 0-1.5-1.5zm-7.9 1.03a1.5 1.5 0 0 0 1.5 1.5h4.5a1.5 1.5 0 0 0 0-3h-4.5a1.5 1.5 0 0 0-1.5 1.5zm2.6-7.15a1.5 1.5 0 0 0-1.5-1.5h-4.5a1.5 1.5 0 0 0 0 3h4.5a1.5 1.5 0 0 0 1.5-1.5zm-6.5 3.5a1.5 1.5 0 0 0-1.5 1.5v3.71a1.5 1.5 0 0 0 1.5 1.5h6.9a1.5 1.5 0 0 0 1.5-1.5v-3.71a1.5 1.5 0 0 0-1.5-1.5H7.5z"/>
                 </svg>
                 <span>انتخاب فایل صوتی</span>
-            </button>
+            </label>
             <!-- ورودی فایل مخفی -->
             <input type="file" id="audioFile" accept="audio/*" style="display: none;">
         </div>
