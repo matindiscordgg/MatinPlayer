@@ -1,71 +1,124 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. گرفتن المان‌های مورد نیاز
+    // --- المان‌های اصلی ---
     const audioFile = document.getElementById('audioFile');
     const playPauseButton = document.getElementById('playPauseButton');
     const seekBar = document.getElementById('seekBar');
     const currentTimeSpan = document.getElementById('currentTime');
     const durationSpan = document.getElementById('duration');
     const currentTrackTitle = document.getElementById('currentTrackTitle');
+    const playlistContainer = document.getElementById('playlistContainer');
     const themeToggle = document.getElementById('themeToggle');
 
-    // ایجاد تگ audio به صورت داینامیک
-    const audioPlayer = new Audio();
-    audioPlayer.preload = 'auto'; // برای بارگذاری سریع‌تر
+    // --- المان‌های ناوبری ---
+    const nextButton = document.getElementById('nextButton');
+    const prevButton = document.getElementById('prevButton');
 
+    // --- وضعیت پلیر و لیست پخش ---
+    const audioPlayer = new Audio();
     let isPlaying = false;
+    let playlist = []; // آرایه برای نگهداری فایل‌های صوتی انتخابی
+    let currentTrackIndex = -1;
 
     // --- توابع کمکی ---
 
-    // فرمت زمان به صورت دقیقه:ثانیه
     const formatTime = (seconds) => {
+        if (isNaN(seconds)) return '0:00';
         const min = Math.floor(seconds / 60);
         const sec = Math.floor(seconds % 60);
         return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     };
 
-    // به‌روزرسانی آیکون پخش/توقف
     const updatePlayPauseIcon = () => {
         const playIcon = playPauseButton.querySelector('.icon-play');
         const pauseIcon = playPauseButton.querySelector('.icon-pause');
         if (isPlaying) {
-            playIcon.style.display = 'none';
-            pauseIcon.style.display = 'inline-block';
+            if (playIcon) playIcon.style.display = 'none';
+            if (pauseIcon) pauseIcon.style.display = 'inline-block';
         } else {
-            playIcon.style.display = 'inline-block';
-            pauseIcon.style.display = 'none';
+            if (playIcon) playIcon.style.display = 'inline-block';
+            if (pauseIcon) pauseIcon.style.display = 'none';
         }
+    };
+
+    const updatePlaylistUI = () => {
+        if (!playlistContainer) return;
+        playlistContainer.innerHTML = ''; // پاک کردن لیست قدیمی
+
+        playlist.forEach((item, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = `playlist-item ${index === currentTrackIndex ? 'active' : ''}`;
+            listItem.dataset.index = index;
+            listItem.textContent = item.name;
+
+            listItem.addEventListener('click', () => {
+                if (index !== currentTrackIndex) {
+                    playTrack(index);
+                } else if (!isPlaying) {
+                    // اگر همین آهنگ بود و متوقف بود، پخش شود
+                    audioPlayer.play();
+                    isPlaying = true;
+                    updatePlayPauseIcon();
+                }
+            });
+            playlistContainer.appendChild(listItem);
+        });
+    };
+
+    const playTrack = (index) => {
+        if (index < 0 || index >= playlist.length) return;
+        
+        currentTrackIndex = index;
+        const track = playlist[index];
+
+        audioPlayer.src = track.url;
+        audioPlayer.load();
+        audioPlayer.play().then(() => {
+            isPlaying = true;
+            updatePlayPauseIcon();
+            updatePlaylistUI(); // برای به‌روزرسانی کلاس 'active'
+        }).catch(error => {
+            console.error("خطا در پخش آهنگ: ", error);
+            isPlaying = false;
+            updatePlayPauseIcon();
+            alert(`نمی‌توان آهنگ "${track.name}" را پخش کرد.`);
+        });
     };
 
     // --- مدیریت رویدادها ---
 
-    // 2. رویداد انتخاب فایل
+    // 1. رویداد انتخاب فایل (حالا فایل‌ها به لیست اضافه می‌شوند)
     audioFile.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            // ساخت URL برای فایل محلی
-            const fileURL = URL.createObjectURL(file);
-            audioPlayer.src = fileURL;
-            
-            // به‌روزرسانی عنوان
-            currentTrackTitle.textContent = file.name;
+        const files = event.target.files;
+        if (files.length === 0) return;
 
-            // فعال‌سازی اولیه و آماده‌سازی برای پخش
-            audioPlayer.load();
-            // نیازی به اجرای خودکار نیست، منتظر کلیک کاربر می‌مانیم
-            isPlaying = false;
-            updatePlayPauseIcon();
-            seekBar.value = 0;
-            currentTimeSpan.textContent = '0:00';
-            durationSpan.textContent = '0:00';
+        Array.from(files).forEach(file => {
+            // فقط فرمت‌های صوتی مجاز (این منطق از قبل در HTML کنترل شده بود)
+            if (file.type.startsWith('audio/')) {
+                playlist.push({
+                    name: file.name,
+                    url: URL.createObjectURL(file)
+                });
+            }
+        });
 
-            // اگر تم (Theme) شما نیاز به تغییر آیکون خورشید/ماه دارد، اینجا کد آن را اضافه کنید
+        // اگر این اولین فایلی است که اضافه شده، آن را پخش کن
+        if (currentTrackIndex === -1 && playlist.length > 0) {
+            currentTrackIndex = 0;
+            audioPlayer.src = playlist[0].url;
+            currentTrackTitle.textContent = playlist[0].name;
+        } else if (currentTrackIndex !== -1) {
+            // اگر پلیر فعال است، عنوان فعلی را به‌روز کن
+            currentTrackTitle.textContent = playlist[currentTrackIndex].name;
         }
+        
+        event.target.value = ''; // پاک کردن ورودی فایل برای اجازه انتخاب مجدد
+        updatePlaylistUI();
     });
 
-    // 3. رویداد پخش/توقف
+    // 2. رویداد پخش/توقف
     playPauseButton.addEventListener('click', () => {
-        if (!audioPlayer.src) {
-            alert("لطفاً ابتدا یک فایل صوتی انتخاب کنید.");
+        if (playlist.length === 0) {
+            alert("لطفاً ابتدا فایل صوتی را از طریق دکمه انتخاب کنید.");
             return;
         }
         
@@ -81,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePlayPauseIcon();
     });
 
-    // 4. به‌روزرسانی زمان و نوار پیشرفت در حین پخش
+    // 3. به‌روزرسانی زمان و نوار پیشرفت
     audioPlayer.addEventListener('timeupdate', () => {
         if (!isNaN(audioPlayer.duration)) {
             const percentage = (audioPlayer.currentTime / audioPlayer.duration) * 100;
@@ -90,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 5. تنظیم زمان از طریق نوار پیشرفت (Seek Bar)
+    // 4. تنظیم زمان از طریق نوار پیشرفت
     seekBar.addEventListener('input', () => {
         if (audioPlayer.duration) {
             const newTime = (seekBar.value / 100) * audioPlayer.duration;
@@ -98,38 +151,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 6. تعیین مدت زمان آهنگ هنگام بارگذاری متادیتا
+    // 5. تنظیم مدت زمان آهنگ
     audioPlayer.addEventListener('loadedmetadata', () => {
         if (!isNaN(audioPlayer.duration)) {
             durationSpan.textContent = formatTime(audioPlayer.duration);
-            seekBar.max = 100; // مطمئن شدن از تنظیم درست max
         }
     });
     
-    // 7. مدیریت پایان آهنگ
+    // 6. مدیریت پایان آهنگ (پرش به آهنگ بعدی)
     audioPlayer.addEventListener('ended', () => {
-        isPlaying = false;
-        updatePlayPauseIcon();
-        seekBar.value = 0;
-        currentTimeSpan.textContent = '0:00';
-        // اینجا می‌توانید کد پرش به آهنگ بعدی را اضافه کنید
+        if (currentTrackIndex < playlist.length - 1) {
+            playTrack(currentTrackIndex + 1); // رفتن به آهنگ بعدی در لیست
+        } else {
+            // پایان لیست پخش
+            isPlaying = false;
+            updatePlayPauseIcon();
+            seekBar.value = 0;
+            currentTimeSpan.textContent = '0:00';
+            currentTrackTitle.textContent = "لیست پخش تمام شد";
+            currentTrackIndex = -1; // بازنشانی
+            updatePlaylistUI();
+        }
+    });
+
+    // 7. دکمه‌های ناوبری لیست پخش
+    nextButton.addEventListener('click', () => {
+        if (playlist.length > 0) {
+            const nextIndex = (currentTrackIndex + 1) % playlist.length;
+            playTrack(nextIndex);
+        }
+    });
+
+    prevButton.addEventListener('click', () => {
+        if (playlist.length > 0) {
+            // برای آهنگ اول، به انتهای لیست برو
+            const prevIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+            playTrack(prevIndex);
+        }
     });
     
-    // 8. مدیریت دکمه‌های بعدی/قبلی (نیاز به لیست پخش دارد، فعلاً غیرفعال یا Placeholder است)
-    // (برای کامل بودن، شما باید یک آرایه از فایل‌ها داشته باشید تا این دکمه‌ها کار کنند)
-    document.getElementById('nextButton').addEventListener('click', () => {
-        // در این نسخه ساده، چیزی تغییر نمی‌کند
-        console.log("Next button clicked - requires playlist logic.");
-    });
+    // 8. مدیریت تغییر تم (Dark/Light Mode)
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            
+            // منطق تغییر آیکون‌ها (باید در HTML شما تنظیم شده باشد)
+            const isDark = document.body.classList.contains('dark-theme');
+            const toggleIcon = themeToggle.querySelector('svg'); // فرض می‌کنیم آیکون درون دکمه است
+            if (toggleIcon) {
+                // فرض می‌کنیم آیکون SVG شما دارای کلاس‌هایی برای تشخیص حالت است
+                // مثال: اگر آیکون خورشید/ماه دارید، کلاس‌هایشان را بر اساس isDark تغییر دهید
+                console.log(`Theme switched to ${isDark ? 'Dark' : 'Light'}`);
+            }
+        });
+    }
 
-    document.getElementById('prevButton').addEventListener('click', () => {
-        // در این نسخه ساده، چیزی تغییر نمی‌کند
-        console.log("Previous button clicked - requires playlist logic.");
-    });
-
-    // 9. مدیریت تغییر تم (فقط یک نمونه ساده)
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-theme');
-        // در اینجا باید آیکون SVG داخل دکمه را بر اساس کلاس dark-theme تغییر دهید.
-    });
+    // --- مقداردهی اولیه ---
+    updatePlayPauseIcon();
+    if (playlist.length === 0) {
+        currentTrackTitle.textContent = "منتظر انتخاب فایل صوتی";
+    }
 });
