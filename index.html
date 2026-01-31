@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پخش‌کننده صوتی اصلاح شده</title>
+    <title>پخش‌کننده صوتی - راه‌حل تضمینی</title>
     
     <!-- استایل های تعبیه شده برای اطمینان از ظاهر ثابت -->
     <style>
@@ -75,9 +75,9 @@
             <button id="nextBtn">بعدی</button>
         </div>
 
-        <!-- دکمه انتخاب فایل که تابع JS را فراخوانی می کند -->
+        <!-- **دکمه انتخاب فایل: مرئی و مستقیم** -->
         <div style="text-align: center; margin-bottom: 25px;">
-            <button type="button" onclick="triggerFileInput()" style="background-color: #28a745; color: white; border: none; padding: 12px 25px; cursor: pointer;">
+            <button id="openFileButton" type="button" style="background-color: #28a745; color: white; border: none; padding: 12px 25px; cursor: pointer;">
                 انتخاب فایل صوتی
             </button>
         </div>
@@ -92,11 +92,11 @@
     </div>
 
     <!-- 
-        ورودی فایل مخفی: 
-        این روش (موقعیت مطلق بسیار دور) بیشترین شانس را برای فراخوانی .click() موفق دارد.
+        ورودی فایل: این بار نیازی به مخفی سازی شدید نیست، 
+        ما فقط آن را در جایی قرار می دهیم که با دکمه مرئی در ارتباط باشد 
     -->
     <input type="file" id="audioFile" accept="audio/*" multiple 
-           style="position: absolute; left: -9999px; top: -9999px; opacity: 0;">
+           style="display: none;"> <!-- فقط display: none برای مخفی سازی کامل از دید کاربر -->
 
     <!-- اسکریپت جاوا اسکریپت تعبیه شده -->
     <script>
@@ -105,6 +105,7 @@
         const playPauseBtn = document.getElementById('playPauseBtn');
         const nextBtn = document.getElementById('nextBtn');
         const prevBtn = document.getElementById('prevBtn');
+        const openFileButton = document.getElementById('openFileButton'); // دکمه مرئی جدید
         const playlistContainer = document.getElementById('playlist');
         const trackTitle = document.getElementById('trackTitle');
         const fileInput = document.getElementById('audioFile'); 
@@ -190,6 +191,9 @@
         if (nextBtn) nextBtn.addEventListener('click', nextTrack);
         if (prevBtn) prevBtn.addEventListener('click', prevTrack);
         if (audio) audio.addEventListener('ended', nextTrack); 
+        
+        // اتصال دکمه مرئی به تابع فعال سازی
+        if (openFileButton) openFileButton.addEventListener('click', triggerFileInput);
 
         // --- File Input Handling (زمانی که کاربر فایلی را انتخاب می کند) ---
         if (fileInput) {
