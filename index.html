@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پخش کننده صوتی گرافیکی</title>
+    <title>پخش کننده صوتی فوق گرافیکی</title>
     <style>
         /* --- 1. استایل‌های پایه و فونت‌ها --- */
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;500;700;900&display=swap');
         
         :root {
-            /* رنگ‌های اصلی برای حالت روشن (Light Mode) */
-            --bg-color: #f0f2f5;
+            /* رنگ‌های حالت روشن (Light Mode) */
+            --bg-color: #e9edf2;
             --player-bg: #ffffff;
-            --text-color: #1c1c1c;
-            --primary-color: #007bff;
-            --accent-color: #28a745;
-            --shadow-light: rgba(0, 0, 0, 0.1);
+            --text-color: #2c3e50;
+            --primary-color: #1e88e5; /* آبی روشن‌تر */
+            --accent-color: #43a047; /* سبز برای پلی */
+            --shadow-light-out: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            --shadow-light-in: inset 2px 2px 5px rgba(0, 0, 0, 0.1), inset -2px -2px 5px rgba(255, 255, 255, 0.8);
             --playlist-bg: #ffffff;
-            --playlist-hover: #e9ecef;
-            --playlist-active: #d1e7fd;
+            --playlist-hover: #f0f0f0;
+            --playlist-active: #c5e1a5; /* سبز کم‌رنگ برای فعال */
         }
 
         body {
@@ -26,179 +27,209 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             padding: 30px;
-            transition: background-color 0.5s, color 0.5s;
+            transition: background-color 0.5s ease, color 0.5s ease;
             max-width: 1000px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
         
-        /* --- 2. استایل‌های حالت تاریک (Dark Mode) --- */
+        /* --- 2. استایل‌های حالت تاریک (Dark Mode) - تمرکز اصلی --- */
         body.dark-theme {
-            --bg-color: #1a1a2e;
-            --player-bg: #16213e;
-            --text-color: #e0e0e0;
-            --primary-color: #4da6ff;
-            --accent-color: #4caf50;
-            --shadow-light: rgba(0, 0, 0, 0.8);
-            --playlist-bg: #2e3b5e;
-            --playlist-hover: #3a4768;
-            --playlist-active: #355a80;
+            --bg-color: #121212;
+            --player-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --primary-color: #64b5f6; /* آبی روشن‌تر در تاریکی */
+            --accent-color: #66bb6a; /* سبز درخشان */
+            --shadow-light-out: 10px 10px 30px rgba(0, 0, 0, 0.8), -10px -10px 30px rgba(60, 60, 60, 0.3);
+            --shadow-light-in: inset 3px 3px 8px rgba(0, 0, 0, 0.9), inset -3px -3px 8px rgba(60, 60, 60, 0.5);
+            --playlist-bg: #252525;
+            --playlist-hover: #303030;
+            --playlist-active: #2e4f31; /* سبز تیره فعال */
         }
 
         /* --- 3. ساختار کلی و پلیر --- */
         h1 {
-            font-weight: 700;
+            font-weight: 900;
             color: var(--primary-color);
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
         .player-container {
             background-color: var(--player-bg);
-            padding: 35px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow-light);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: var(--shadow-light-out);
             width: 100%;
-            max-width: 600px;
+            max-width: 650px;
+            transition: all 0.5s ease;
         }
 
         /* --- 4. بخش انتخاب فایل --- */
         .file-input-section {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px dashed rgba(150, 150, 150, 0.3);
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid rgba(150, 150, 150, 0.1);
         }
         #audioFile {
             display: none;
         }
         .custom-file-upload {
-            padding: 12px 25px;
-            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            padding: 14px 30px;
+            background: linear-gradient(145deg, var(--primary-color), #1565c0);
             color: white;
-            border-radius: 30px;
+            border-radius: 35px;
             cursor: pointer;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
             font-weight: 500;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
-            transition: all 0.3s ease;
+            box-shadow: 0 6px 12px rgba(30, 136, 229, 0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Springy effect */
         }
         .custom-file-upload:hover {
-            background: linear-gradient(45deg, #0056b3, var(--primary-color));
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
-            transform: translateY(-2px);
+            transform: scale(1.05);
+            box-shadow: 0 8px 18px rgba(30, 136, 229, 0.6);
         }
         
         /* --- 5. بخش اطلاعات و کنترل پلیر --- */
         .track-info p {
-            font-size: 1.1em;
-            margin: 0 0 15px 0;
+            font-size: 1.2em;
+            font-weight: 700;
             text-align: center;
-            min-height: 24px; /* برای جلوگیری از پرش محتوا */
+            min-height: 28px;
+            margin: 0 0 20px 0;
+            color: var(--text-color);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
         .controls {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
+            justify-content: space-around;
+            margin-bottom: 30px;
         }
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
+        
         /* دکمه اصلی (پلی/پاز) */
         #playPauseButton {
-            background: linear-gradient(135deg, var(--accent-color), #388e3c);
+            background: radial-gradient(circle at center, var(--accent-color) 0%, #388e3c 70%);
             color: white;
             border-radius: 50%;
-            width: 70px;
-            height: 70px;
+            width: 85px;
+            height: 85px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.5);
-            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px rgba(67, 160, 71, 0.6), var(--shadow-light-in);
+            transition: all 0.2s ease-in-out;
+            border: none;
         }
         #playPauseButton:hover {
-            box-shadow: 0 7px 20px rgba(40, 167, 69, 0.7);
-            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(67, 160, 71, 0.8), var(--shadow-light-in);
+            transform: scale(1.08);
         }
-        
+        #playPauseButton:active {
+            transform: scale(0.95);
+            box-shadow: var(--shadow-light-in); /* Pressed effect */
+        }
+
         /* دکمه‌های ناوبری و تم */
         .player-button {
             color: var(--text-color);
-            opacity: 0.7;
+            opacity: 0.75;
+            padding: 10px;
+            border-radius: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         .player-button:hover {
             opacity: 1;
+            background-color: rgba(150, 150, 150, 0.1);
             color: var(--primary-color);
         }
         .player-button svg {
+            width: 32px;
+            height: 32px;
+        }
+        #themeToggle svg {
             width: 28px;
             height: 28px;
         }
-        #themeToggle svg {
-            width: 26px;
-            height: 26px;
-        }
         
-        /* زمان و نوار پیشرفت */
-        .time-display {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
+        /* نوار پیشرفت (Seek Bar) */
         #seekBar {
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 10px;
-            background: rgba(150, 150, 150, 0.3);
-            border-radius: 5px;
+            height: 12px;
+            background: rgba(150, 150, 150, 0.2);
+            border-radius: 6px;
             outline: none;
-            transition: opacity .2s;
+            margin: 15px 0;
             cursor: pointer;
-            margin: 0 10px;
+            box-shadow: var(--shadow-light-in);
         }
         #seekBar::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            background: var(--accent-color);
+            background: var(--primary-color);
             cursor: pointer;
-            border: 3px solid var(--player-bg);
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            border: 4px solid var(--player-bg);
+            box-shadow: 0 0 10px rgba(30, 136, 229, 0.8);
+            transition: all 0.1s ease;
+        }
+        #seekBar:hover::-webkit-slider-thumb {
+            background: #64b5f6;
+            transform: scale(1.1);
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 10px;
+        }
+        .time-display {
+            font-size: 0.95em;
+            opacity: 0.7;
+            font-weight: 500;
         }
         
         /* --- 6. لیست پخش (Playlist) --- */
         .playlist-section {
             width: 100%;
-            margin-top: 30px;
+            margin-top: 40px;
         }
         .playlist-section h3 {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: var(--primary-color);
-            font-weight: 500;
+            font-weight: 700;
+            font-size: 1.4em;
         }
         #playlistContainer {
             list-style: none;
             padding: 0;
-            max-height: 350px;
+            max-height: 400px;
             overflow-y: auto;
             background-color: var(--playlist-bg);
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(150, 150, 150, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light-in);
+            border: 1px solid rgba(150, 150, 150, 0.2);
         }
         .playlist-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(150, 150, 150, 0.1);
+            padding: 18px 25px;
+            border-bottom: 1px solid rgba(150, 150, 150, 0.08);
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.3s, color 0.3s, font-weight 0.3s;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -212,86 +243,84 @@
         .playlist-item.active {
             background-color: var(--playlist-active);
             color: var(--text-color);
-            font-weight: 700;
+            font-weight: 900; /* بسیار پررنگ */
+            box-shadow: 0 0 10px rgba(30, 136, 229, 0.1);
         }
         .track-name {
             flex-grow: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-right: 10px;
+            margin-right: 15px;
         }
         .track-duration {
             font-size: 0.85em;
             opacity: 0.6;
+            font-weight: 300;
         }
     </style>
 </head>
 <body class="dark-theme"> <!-- تنظیم اولیه روی دارک مود -->
 
-    <h1>Audio Player Pro</h1>
+    <h1>پخش کننده صوتی فوق گرافیکی</h1>
 
     <div class="player-container">
         
         <!-- بخش انتخاب فایل -->
         <div class="file-input-section">
             <label for="audioFile" class="custom-file-upload">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style="margin-left: 8px;"><path d="M17 11h-4V7a1 1 0 00-2 0v4H7a1 1 0 000 2h4v4a1 1 0 002 0v-4h4a1 1 0 000-2z"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
-                فایل‌های صوتی را انتخاب کنید
+                <!-- آیکون آپلود سفارشی -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style="margin-left: 10px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM4 15v3h16v-3H4z" fill="currentColor"/></svg>
+                انتخاب فایل‌های صوتی
             </label>
             <input type="file" id="audioFile" accept="audio/mp3, audio/wav, audio/ogg, audio/flac, audio/aac" multiple>
         </div>
 
         <!-- بخش اطلاعات و کنترل‌های اصلی -->
         <div class="track-info">
-            <p id="currentTrackTitle">هیچ آهنگی انتخاب نشده است</p>
+            <p id="currentTrackTitle">هیچ آهنگی بارگذاری نشده است...</p>
         </div>
         
         <div class="controls">
-            <div class="control-group time-display">
-                <span id="currentTime">0:00</span> 
-            </div>
+            <button id="prevButton" class="player-button" title="آهنگ قبلی">
+                <!-- آیکون پرش به عقب -->
+                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor"/></svg>
+            </button>
+            
+            <button id="playPauseButton" title="پخش/توقف">
+                <!-- آیکون‌ها در JS بر اساس وضعیت تغییر خواهند کرد -->
+                <span class="icon-play" style="display: inline-block;">▶</span> 
+                <span class="icon-pause" style="display: none;">❚❚</span>
+            </button>
 
-            <div class="control-group buttons">
-                <button id="prevButton" class="player-button" title="آهنگ قبلی">
-                    <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                </button>
-                
-                <button id="playPauseButton" title="پخش/توقف">
-                    <!-- آیکون‌ها در JS بر اساس وضعیت تغییر خواهند کرد -->
-                    <span class="icon-play" style="display: inline-block;">▶</span> 
-                    <span class="icon-pause" style="display: none;">❚❚</span>
-                </button>
+            <button id="nextButton" class="player-button" title="آهنگ بعدی">
+                <!-- آیکون پرش به جلو -->
+                <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-8.5 6l8.5-6v12z" fill="currentColor"/></svg>
+            </button>
 
-                <button id="nextButton" class="player-button" title="آهنگ بعدی">
-                    <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-8.5 6l8.5-6v12z"/></svg>
-                </button>
-            </div>
-
-            <div class="control-group theme-and-seek">
-                 <!-- دکمه تم -->
-                <button id="themeToggle" class="player-button" title="تغییر تم">
-                    <svg viewBox="0 0 24 24" id="theme-icon"><path id="sun-icon" d="M12 2a1 1 0 00-1 1v2a1 1 0 002 0V3a1 1 0 00-1-1zm0 17a1 1 0 00-1 1v2a1 1 0 002 0v-2a1 1 0 00-1-1zM4.93 5.07a1 1 0 00-1.41 1.41l1.41 1.41a1 1 0 001.41-1.41l-1.41-1.41zM17.66 17.66a1 1 0 00-1.41 1.41l1.41 1.41a1 1 0 001.41-1.41l-1.41-1.41zM3 13a1 1 0 00-1-1H1a1 1 0 000 2h1a1 1 0 001-1zm18 0a1 1 0 00-1-1h-1a1 1 0 000 2h1a1 1 0 001-1zM4.93 17.66a1 1 0 001.41 1.41l1.41-1.41a1 1 0 00-1.41-1.41l-1.41 1.41zM17.66 5.07a1 1 0 00-1.41 1.41l1.41 1.41a1 1 0 001.41-1.41l-1.41-1.41zM12 9a3 3 0 100 6 3 3 0 000-6z"/></svg>
-                </button>
-            </div>
+            <button id="themeToggle" class="player-button" title="تغییر تم">
+                <!-- آیکون ماه/خورشید -->
+                <svg viewBox="0 0 24 24" id="theme-icon"><path id="moon-icon" d="M12 2a1 1 0 011 1v2a1 1 0 01-2 0V3a1 1 0 011-1zm0 17a1 1 0 011 1v2a1 1 0 01-2 0v-2a1 1 0 011-1zM4.93 5.07a1 1 0 011.41 1.41l-1.41 1.41a1 1 0 01-1.41-1.41l1.41-1.41zM17.66 17.66a1 1 0 011.41 1.41l-1.41 1.41a1 1 0 01-1.41-1.41l1.41-1.41zM3 13a1 1 0 011-1h1a1 1 0 010 2H4a1 1 0 01-1-1zm18 0a1 1 0 01-1-1h-1a1 1 0 010 2h1a1 1 0 011-1zM4.93 17.66a1 1 0 01-1.41 1.41l-1.41-1.41a1 1 0 011.41-1.41l1.41 1.41zM17.66 5.07a1 1 0 01-1.41 1.41l-1.41-1.41a1 1 0 011.41-1.41l1.41 1.41zM12 9a3 3 0 100 6 3 3 0 000-6z" fill="currentColor" style="display: none;"/><path id="sun-icon-path" d="M12 2a1 1 0 00-1 1v2a1 1 0 002 0V3a1 1 0 00-1-1zm0 17a1 1 0 00-1 1v2a1 1 0 002 0v-2a1 1 0 00-1-1zM4.93 5.07a1 1 0 00-1.41 1.41l1.41 1.41a1 1 0 001.41-1.41l-1.41-1.41zM17.66 17.66a1 1 0 00-1.41 1.41l1.41 1.41a1 1 0 001.41-1.41l-1.41-1.41zM3 13a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm18 0a1 1 0 00-1-1v1a1 1 0 002 0v-1a1 1 0 00-1-1zM4.93 17.66a1 1 0 001.41 1.41l-1.41 1.41a1 1 0 00-1.41-1.41l1.41-1.41zM17.66 5.07a1 1 0 00-1.41 1.41l1.41 1.41a1 1 0 001.41-1.41l-1.41-1.41zM12 9a3 3 0 100 6 3 3 0 000-6z" fill="currentColor"/></svg>
+            </button>
         </div>
 
-        <!-- نوار پیشرفت -->
-        <input type="range" id="seekBar" value="0" min="0" max="100">
-        <div class="control-group time-display" style="justify-content: flex-start; width: 100%; margin-top: 5px;">
-            <span id="duration" style="margin-right: 5px;">0:00</span>
+        <!-- نوار پیشرفت و زمان -->
+        <div class="time-row">
+            <span class="time-display" id="currentTime">0:00</span>
+            <input type="range" id="seekBar" value="0" min="0" max="100">
+            <span class="time-display" id="duration">0:00</span>
         </div>
     </div>
 
     <!-- بخش لیست پخش (Playlist) -->
     <div class="playlist-section">
-        <h3>لیست پخش (Playlist)</h3>
+        <h3>لیست آهنگ‌ها</h3>
         <ul id="playlistContainer">
             <!-- آیتم‌های لیست به صورت داینامیک توسط JS اضافه می‌شوند -->
         </ul>
     </div>
 
-    <!-- اسکریپت باید در انتهای بادی قرار گیرد -->
-    <script src="script.js"></script>
+    <!-- توجه: همچنان به اسکریپت جاوا اسکریپت نیاز دارید که منطق را پیاده سازی کند -->
+    <!-- <script src="script.js"></script> -->
 </body>
 </html>
