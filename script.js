@@ -1,5 +1,5 @@
 // =================================================================
-// Player Script - Final Version with fixes
+// Player Script - Final Refined Version
 // =================================================================
 
 const audio = document.querySelector('audio');
@@ -9,17 +9,17 @@ const prevBtn = document.querySelector('#prevBtn');
 const playlistContainer = document.querySelector('#playlist');
 const trackTitle = document.querySelector('#trackTitle');
 
-// ********************************************************************
 // FIX: Correctly select the file input using its ID 'audioFile'
-// ********************************************************************
-const fileInput = document.querySelector('#audioFile');
-// ********************************************************************
+const fileInput = document.querySelector('#audioFile'); 
 
 let playlist = [];
 let currentTrackIndex = -1; // -1 indicates no track loaded yet
 
+// --- Helper Functions ---
+
 // Function to format time (seconds to MM:SS)
 function formatTime(seconds) {
+    if (isNaN(seconds) || seconds < 0) return '00:00';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
@@ -28,17 +28,16 @@ function formatTime(seconds) {
 // Function to update the playlist UI
 function updatePlaylistUI() {
     if (!playlistContainer) return;
-    playlistContainer.innerHTML = ''; // Clear existing list
+    playlistContainer.innerHTML = ''; 
     playlist.forEach((track, index) => {
         const li = document.createElement('li');
         li.textContent = `${index + 1}. ${track.name}`;
         li.dataset.index = index;
+        if (index === currentTrackIndex) {
+            li.classList.add('active'); // Highlight current track
+        }
         li.addEventListener('click', () => {
-            if (currentTrackIndex !== index) {
-                loadTrack(index);
-            } else {
-                togglePlayPause(); // Allow re-clicking current track to play/pause
-            }
+            loadTrack(index);
         });
         playlistContainer.appendChild(li);
     });
@@ -55,27 +54,28 @@ function loadTrack(index) {
     const track = playlist[index];
 
     if (audio) {
+        // Revoke previous object URL before setting a new one to clean memory
+        if (audio.src && audio.src.startsWith('blob:')) {
+             URL.revokeObjectURL(audio.src);
+        }
+        
         audio.src = track.url;
         trackTitle.textContent = track.name;
         audio.load();
 
-        // Attempt to play. Autoplay might be blocked by the browser.
+        // Attempt to play. User gesture is usually required.
         const playPromise = audio.play();
 
         if (playPromise !== undefined) {
-            playPromise.then(_ => {
-                // Playback started successfully
-                console.log(`Playback started for: ${track.name}`);
+            playPromise.then(() => {
                 if (playPauseBtn) playPauseBtn.textContent = 'Pause';
             }).catch(error => {
-                // Autoplay was prevented.
-                console.warn("Autoplay was prevented. User must interact to start playback.", error);
+                // Autoplay blocked by browser
                 if (playPauseBtn) playPauseBtn.textContent = 'Play';
-                // Ensure player controls are not disabled if autoplay fails
             });
         }
     }
-    updatePlaylistUI(); // Highlight current track in UI
+    updatePlaylistUI();
 }
 
 // Function to load the current track based on currentTrackIndex
@@ -89,9 +89,7 @@ function togglePlayPause() {
     if (audio.paused) {
         audio.play().then(() => {
             if (playPauseBtn) playPauseBtn.textContent = 'Pause';
-        }).catch(error => {
-            console.warn("Playback prevented on toggle.", error);
-        });
+        }).catch(_ => { /* Handle blocked play */ });
     } else {
         audio.pause();
         if (playPauseBtn) playPauseBtn.textContent = 'Play';
@@ -112,114 +110,69 @@ function prevTrack() {
     loadCurrentTrack();
 }
 
-// Event Listeners for Player Controls
-if (playPauseBtn) {
-    playPauseBtn.addEventListener('click', togglePlayPause);
-}
-if (nextBtn) {
-    nextBtn.addEventListener('click', nextTrack);
-}
-if (prevBtn) {
-    prevBtn.addEventListener('click', prevTrack);
-}
+// --- Event Listeners for Player Controls ---
+if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+if (nextBtn) nextBtn.addEventListener('click', nextTrack);
+if (prevBtn) prevBtn.addEventListener('click', prevTrack);
 
-// Event listener for when the current track ends
 if (audio) {
-    audio.addEventListener('ended', () => {
-        // Simulate clicking the next button to play the next track
-        // This ensures the same logic as nextTrack() is called
-        nextTrack();
-    });
-
-    audio.addEventListener('timeupdate', () => {
-        // Optional: Update time display if you have elements for it
-        // For example:
-        // const currentTimeDisplay = document.querySelector('#currentTime');
-        // if (currentTimeDisplay) currentTimeDisplay.textContent = formatTime(audio.currentTime);
-    });
-
+    audio.addEventListener('ended', nextTrack); // Play next on end
+    
     audio.addEventListener('loadedmetadata', () => {
-        // Update duration display if you have elements for it
-        // For example:
-        // const durationDisplay = document.querySelector('#duration');
-        // if (durationDisplay) durationDisplay.textContent = formatTime(audio.duration);
-        
-        // Store duration if needed, though it might be complex with blob URLs
-        if (currentTrackIndex !== -1 && playlist[currentTrackIndex]) {
-            playlist[currentTrackIndex].duration = audio.duration;
-        }
+        // Optional: Update duration display
     });
 }
 
-// ********************************************************************
-// FIX: Event listener for file input 'change' event
-// Ensures we correctly handle the selected audio files.
-// ********************************************************************
+// --- File Input Handling (The core fix) ---
 if (fileInput) {
     fileInput.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
-        if (files.length === 0) {
-            console.log("No files selected.");
-            return;
-        }
+        if (files.length === 0) return;
 
-        // Clear existing playlist and reset index if new files are added
-        // You might want different behavior here (e.g., appending)
+        // Clear existing playlist and reset index
+        // IMPORTANT: Before creating new blob URLs, revoke old ones if they exist.
+        playlist.forEach(track => {
+            if (track.url && track.url.startsWith('blob:')) {
+                URL.revokeObjectURL(track.url);
+            }
+        });
         playlist = []; 
         currentTrackIndex = -1;
 
-        files.forEach(file => {
-            if (file.type.startsWith('audio/')) {
-                playlist.push({
-                    name: file.name,
-                    url: URL.createObjectURL(file),
-                    duration: 0 // Will be updated by loadedmetadata
-                });
-            } else {
-                console.warn(`Skipping non-audio file: ${file.name}`);
-            }
+        files.filter(file => file.type.startsWith('audio/')).forEach(file => {
+            playlist.push({
+                name: file.name,
+                url: URL.createObjectURL(file), // Create new blob URL
+                duration: 0
+            });
         });
 
         if (playlist.length > 0) {
-            currentTrackIndex = 0; // Load the first file from the selection
+            currentTrackIndex = 0;
             loadCurrentTrack();
         } else {
-            console.log("No valid audio files were selected.");
-            trackTitle.textContent = "No audio files selected.";
+            trackTitle.textContent = "No valid audio files were selected.";
         }
         updatePlaylistUI();
     });
 } else {
-    console.error("Error: File input element with ID 'audioFile' not found. Upload functionality will not work.");
+    console.error("FATAL ERROR: File input element with ID 'audioFile' not found in HTML.");
 }
-// ********************************************************************
 
-
-// Function to initialize the player (e.g., set default state)
+// --- Initialization ---
 function initializePlayer() {
-    // Set initial button states or text
     if (playPauseBtn) playPauseBtn.textContent = 'Play';
-    if (trackTitle) trackTitle.textContent = 'No track loaded';
-    
-    // Ensure audio element is ready
-    if (audio) {
-        audio.pause();
-        audio.removeAttribute('src'); // Clear any previous source
-    }
-    
-    // Clear playlist UI initially
+    if (trackTitle) trackTitle.textContent = 'Ready to load audio';
     updatePlaylistUI();
 }
 
-// Initialize the player when the DOM is ready
 document.addEventListener('DOMContentLoaded', initializePlayer);
 
-// Cleanup: Revoke object URLs when the window is closed or navigating away
+// Cleanup: Revoke object URLs when the window is closed
 window.addEventListener('beforeunload', () => {
     playlist.forEach(track => {
-        if (track.url.startsWith('blob:')) {
+        if (track.url && track.url.startsWith('blob:')) {
             URL.revokeObjectURL(track.url);
         }
     });
-    console.log("Blob URLs revoked.");
 });
