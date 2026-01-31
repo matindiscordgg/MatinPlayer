@@ -1,0 +1,21 @@
+{
+    "name": "Matin Player",
+    "short_name": "Matin",
+    "description": "Local Audio Player - Apple Music Style",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ff3b30",
+    "icons": [
+        {
+            "src": "/icon_192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon_512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

@@ -1,0 +1,225 @@
+/* --- Global & Theme Setup (Apple Music Style) --- */
+:root {
+    /* Light Mode (Default) */
+    --color-bg: #ffffff;
+    --color-text: #1c1c1e; /* Dark text, typical for iOS light mode */
+    --color-secondary-text: #8e8e93;
+    --color-accent: #ff3b30; /* Apple Red */
+    --color-player-bg: #f2f2f7; /* Light gray background */
+    --color-control-bg: #e0e0e5;
+    --color-disabled: #c7c7cc;
+    --color-border: #e0e0e0;
+}
+
+[data-theme='dark'] {
+    /* Dark Mode */
+    --color-bg: #1c1c1e; /* Deep dark background */
+    --color-text: #ffffff;
+    --color-secondary-text: #8e8e93;
+    --color-accent: #ff453a; /* Brighter Red for dark mode */
+    --color-player-bg: #2c2c2e;
+    --color-control-bg: #3a3a3c;
+    --color-disabled: #5c5c5c;
+    --color-border: #38383a;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    /* Font Smoothing for iOS Look */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align content from top */
+}
+
+#app-container {
+    width: 100%;
+    max-width: 450px; /* Typical mobile width */
+    padding-top: 30px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height for scrollability */
+}
+
+/* --- Header Style --- */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin-bottom: 15px;
+}
+
+.app-title {
+    font-size: 1.25rem;
+    font-weight: 600; /* Semibold */
+    letter-spacing: -0.02em;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.icon-btn:disabled {
+    color: var(--color-disabled);
+    cursor: default;
+}
+
+/* --- Player Content --- */
+.player-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+}
+
+/* Album Art */
+.album-art-container {
+    width: 90%;
+    max-width: 300px;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.album-art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px; /* Rounded corners */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    display: none; /* Hidden until image is loaded */
+}
+
+.placeholder-icon {
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-player-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 14px;
+    font-size: 3rem;
+    color: var(--color-secondary-text);
+}
+
+/* Song Info */
+.song-info {
+    text-align: center;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+#songTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    /* Ellipsis for long titles */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#artistName {
+    font-size: 1rem;
+    color: var(--color-secondary-text);
+}
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+#seekBar {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: var(--color-border);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+#seekBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    cursor: pointer;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-secondary-text);
+    padding: 0 2px;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 2rem;
+    padding: 10px;
+}
+
+.control-btn:disabled {
+    color: var(--color-disabled);
+    cursor: default;
+}
+
+.play-pause {
+    font-size: 3rem;
+    color: var(--color-accent);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--color-control-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.large-btn {
+    font-size: 2.5rem;
+}
+
+/* --- Footer Style --- */
+.app-footer {
+    text-align: center;
+    padding: 15px 20px;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+    color: var(--color-secondary-text);
+}
