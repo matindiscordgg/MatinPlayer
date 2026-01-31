@@ -3,88 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پخش‌کننده موسیقی گرافیکی</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- استفاده از فونت وزیرمتن -->
-    <link href="https://cdn.fontcdn.live/fonts/vazirmatn/v30/Vazirmatn-Regular.css" rel="stylesheet">
-</head>
-<body class="dark-theme"> <!-- حالت پیش فرض: تاریک -->
-
-    <div class="music-player-container">
-
-        <!-- بخش کنترل تم (Toggle Theme) -->
-        <div class="theme-toggle-area">
-            <button id="themeToggle" class="icon-button">
-                <!-- آیکون ماه (برای حالت روشن) و خورشید (برای حالت تاریک) -->
-                <svg id="moon-icon" class="theme-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                    <path d="M12 2a10 10 0 0 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/>
-                </svg>
-                <svg id="sun-icon-path" class="theme-icon" viewBox="0 0 24 24" fill="currentColor" style="display: block;">
-                    <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 3c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1s1-.45 1-1V4c0-.55-.45-1-1-1zm0 16c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1s1-.45 1-1v-1c0-.55-.45-1-1-1zM4 12c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1c0-.55-.45-1-1-1H4zm14 0c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1c0-.55-.45-1-1-1h-1zM5.4 6.6l-.7-.7a1 1 0 0 0-1.4 1.4l.7.7c.4.4.9.6 1.4.6s1-.2 1.4-.6c.4-.4.6-1 .6-1.4s-.2-1-.6-1.4zM18.4 17.4l.7-.7a1 1 0 0 0 0-1.4 1 1 0 0 0-1.4-.7l-.7.7c-.4.4-.6 1-.6 1.4s.2 1 .6 1.4c.4.4 1 .6 1.4.6s1-.2 1.4-.6zM5.4 17.4l-.7-.7a1 1 0 0 1 0-1.4 1 1 0 0 1 1.4 0l.7.7c.4.4.6 1 .6 1.4s-.2 1-.6 1.4c-.4.4-1 .6-1.4.6s-1-.2-1.4-.6zM18.4 6.6l.7-.7a1 1 0 0 0 0-1.4 1 1 0 0 0-1.4 0l-.7.7c-.4.4-.6 1-.6 1.4s.2 1 .6 1.4c.4.4 1 .6 1.4.6s1-.2 1.4-.6z"/>
-                </svg>
-            </button>
-        </div>
+    <title>پخش‌کننده صوتی پیشرفته</title>
+    <!-- اضافه کردن استایل ساده برای نمایش بهتر -->
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            direction: rtl; /* برای راست‌چین بودن محتوا */
+        }
+        .player-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .track-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #trackTitle {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        #playPauseBtn { background-color: #28a745; color: white; }
+        #prevBtn, #nextBtn { background-color: #ffc107; color: #333; }
         
-        <!-- پخش کننده اصلی -->
-        <div class="main-player-section">
-            
-            <!-- عنوان آهنگ فعلی -->
-            <h2 id="currentTrackTitle">هیچ آهنگی بارگذاری نشده است...</h2>
-            
-            <!-- دکمه اصلی پخش/توقف (قطر 85px) -->
-            <button id="playPauseButton" class="play-pause-button">
-                <!-- آیکون پخش -->
-                <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" width="40" height="40">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
-                <!-- آیکون توقف -->
-                <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" width="40" height="40" style="display: none;">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                </svg>
-            </button>
+        /* استایل لیست پخش */
+        #playlist-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        #playlist {
+            list-style: none;
+            padding: 0;
+        }
+        #playlist li {
+            padding: 8px 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #e9ecef;
+            transition: background-color 0.2s;
+        }
+        #playlist li:hover {
+            background-color: #dee2e6;
+        }
+        #playlist li.active {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
 
-            <!-- نوار پیشرفت (Seek Bar) -->
-            <div class="seek-bar-container">
-                <input type="range" id="seekBar" value="0" min="0" max="100">
-                <div class="time-display">
-                    <span id="currentTime">0:00</span>
-                    <span id="duration">0:00</span>
-                </div>
-            </div>
-            
-            <!-- کنترل‌های ناوبری -->
-            <div class="controls">
-                <button id="prevButton" class="icon-button nav-button">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6l-8.5 6z"/>
-                    </svg>
-                </button>
+        /* استایل دکمه انتخاب فایل */
+        #fileSelectionArea button {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
 
-                <label for="audioFile" class="upload-button icon-button">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-4H7l5-5 5 5h-3v4z"/>
-                    </svg>
-                    <input type="file" id="audioFile" accept="audio/*" multiple style="display: none;">
-                </label>
-                
-                <button id="nextButton" class="icon-button nav-button">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                        <path d="M16 6v12l-8.5-6 8.5-6zm-10 12V6h2v12H6z"/>
-                    </svg>
-                </button>
-            </div>
+    <div class="player-container">
+        <h1>پخش کننده موسیقی</h1>
+
+        <!-- 1. المان صوتی (می‌تواند مخفی باشد) -->
+        <audio id="myAudioElement" controls></audio> 
+
+        <!-- 2. اطلاعات آهنگ فعلی -->
+        <div class="track-info">
+            <p>عنوان آهنگ:</p>
+            <span id="trackTitle">در انتظار بارگذاری...</span>
         </div>
 
-        <!-- لیست پخش -->
-        <div class="playlist-section">
-            <h3>لیست آهنگ‌ها</h3>
-            <ul id="playlistContainer" class="playlist">
-                <!-- آیتم‌های لیست اینجا توسط JS اضافه می‌شوند -->
+        <!-- 3. دکمه های کنترل پخش -->
+        <div class="controls">
+            <button id="prevBtn">قبلی</button>
+            <button id="playPauseBtn">Play</button>
+            <button id="nextBtn">بعدی</button>
+        </div>
+
+        <!-- 4. بخش انتخاب فایل (نقطه کلیدی اصلاح شده) -->
+        <div id="fileSelectionArea" style="text-align: center; margin-bottom: 20px;">
+            <!-- 
+                *** نکته مهم ***
+                این دکمه تابع triggerFileInput() را فراخوانی می کند
+                که در اسکریپت به fileInput.click() متصل شده است.
+            -->
+            <button type="button" onclick="triggerFileInput()">انتخاب فایل صوتی</button>
+        </div>
+
+        <!-- 5. لیست پخش -->
+        <div id="playlist-section">
+            <h2>لیست پخش</h2>
+            <ul id="playlist">
+                <!-- لیست از طریق جاوا اسکریپت پر خواهد شد -->
             </ul>
         </div>
 
     </div>
 
-    <script src="script.js"></script>
+    <!-- 6. ورودی فایل (باید مخفی باشد) -->
+    <!-- این تگ باید آیدی 'audioFile' را داشته باشد -->
+    <input type="file" id="audioFile" accept="audio/*" multiple style="display: none;">
+
+    <!-- 7. لینک کردن فایل جاوا اسکریپت -->
+    <!-- اگر کد جاوا اسکریپت را در همین فایل قرار دادید، نیازی به این خط نیست -->
+    <script>
+        // =================================================================
+        // کد جاوا اسکریپت کامل (همان کد قبلی)
+        // =================================================================
+
+        // --- DOM Element Selections ---
+        // در اینجا، آیدی myAudioElement به عنوان ورودی audio استفاده می شود
+        const audio = document.querySelector('#myAudioElement'); 
+        const playPauseBtn = document.querySelector('#playPauseBtn');
+        const nextBtn = document.querySelector('#nextBtn');
+        const prevBtn = document.querySelector('#prevBtn');
+        const playlistContainer = document.querySelector('#playlist');
+        const trackTitle = document.querySelector('#trackTitle');
+        // *** اصلاح کلیدی: انتخابگر آیدی به درستی روی 'audioFile' تنظیم شد ***
+        const fileInput = document.querySelector('#audioFile'); 
+
+        let playlist = [];
+        let currentTrackIndex = -1; // -1 indicates no track loaded yet
+
+        // --- Helper Functions ---
+
+        // Function to format time (seconds to MM:SS)
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        }
+
+        // Function to update the playlist UI
+        function updatePlaylistUI() {
+            if (!playlistContainer) return;
+            playlistContainer.innerHTML = ''; 
+            playlist.forEach((track, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${track.name}`;
+                li.dataset.index = index;
+                if (index === currentTrackIndex) {
+                    li.classList.add('active'); 
+                }
+                // Use an anonymous function wrapper for index passing
+                li.addEventListener('click', () => loadTrack(index));
+                playlistContainer.appendChild(li);
+            });
+        }
+
+        // Function to load a track by index
+        function loadTrack(index) {
+            if (index < 0 || index >= playlist.length) {
+                console.error("Track index out of bounds.");
+                return;
+            }
+
+            currentTrackIndex = index;
+            const track = playlist[index];
+
+            if (audio) {
+                // Revoke previous object URL
+                if (audio.src && audio.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(audio.src);
+                }
+                
+                audio.src = track.url;
+                if(trackTitle) trackTitle.textContent = track.name;
+                audio.load();
+
+                // Attempt to play
+                const playPromise = audio.play();
+
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        if (playPauseBtn) playPauseBtn.textContent = 'Pause';
+                    }).catch(error => {
+                        // Autoplay blocked: user must click play button later
+                        if (playPauseBtn) playPauseBtn.textContent = 'Play';
+                    });
+                }
+            }
+            updatePlaylistUI();
+        }
+
+        // Function to load the current track based on currentTrackIndex
+        function loadCurrentTrack() {
+            loadTrack(currentTrackIndex);
+        }
+
+        // Function to toggle play/pause
+        function togglePlayPause() {
+            if (!audio || playlist.length === 0) return;
+            if (audio.paused) {
+                audio.play().then(() => {
+                    if (playPauseBtn) playPauseBtn.textContent = 'Pause';
+                }).catch(_ => { /* Handle blocked play */ });
+            } else {
+                audio.pause();
+                if (playPauseBtn) playPauseBtn.textContent = 'Play';
+            }
+        }
+
+        // Function to play the next track
+        function nextTrack() {
+            if (playlist.length === 0) return;
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            loadCurrentTrack();
+        }
+
+        // Function to play the previous track
+        function prevTrack() {
+            if (playlist.length === 0) return;
+            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+            loadCurrentTrack();
+        }
+
+        // --- File Input Trigger Function (For HTML Button Call) ---
+        function triggerFileInput() {
+            if (fileInput) {
+                fileInput.click(); // This forcibly opens the file selection dialog
+            } else {
+                console.error("Error: File Input element with ID 'audioFile' not found.");
+            }
+        }
+
+
+        // --- Event Listeners for Player Controls ---
+        if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+        if (nextBtn) nextBtn.addEventListener('click', nextTrack);
+        if (prevBtn) prevBtn.addEventListener('click', prevTrack);
+
+        if (audio) {
+            audio.addEventListener('ended', nextTrack); 
+        }
+
+        // --- File Input Handling ---
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                // Cleanup previous files' URLs
+                playlist.forEach(track => {
+                    if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
+                });
+                playlist = []; 
+                currentTrackIndex = -1;
+
+                files.filter(file => file.type.startsWith('audio/')).forEach(file => {
+                    playlist.push({
+                        name: file.name,
+                        url: URL.createObjectURL(file), 
+                        duration: 0
+                    });
+                });
+
+                if (playlist.length > 0) {
+                    currentTrackIndex = 0;
+                    loadCurrentTrack();
+                } else {
+                    if(trackTitle) trackTitle.textContent = "No valid audio files were selected.";
+                }
+                updatePlaylistUI();
+            });
+        } else {
+            console.error("FATAL ERROR: File input element with ID 'audioFile' not found in HTML.");
+        }
+
+        // --- Initialization ---
+        function initializePlayer() {
+            if (playPauseBtn) playPauseBtn.textContent = 'Play';
+            if (trackTitle) trackTitle.textContent = 'Ready to load audio';
+            updatePlaylistUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', initializePlayer);
+
+        // Cleanup on window close
+        window.addEventListener('beforeunload', () => {
+            playlist.forEach(track => {
+                if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
+            });
+        });
+        // =================================================================
+        // پایان کد جاوا اسکریپت
+        // =================================================================
+    </script>
+
 </body>
 </html>
