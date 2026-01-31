@@ -1,187 +1,135 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. گرفتن المان‌های مورد نیاز
     const audioFile = document.getElementById('audioFile');
-    const openFileButton = document.getElementById('openFileButton');
     const playPauseButton = document.getElementById('playPauseButton');
-    const prevButton = document.getElementById('prevButton');
-    const nextButton = document.getElementById('nextButton');
     const seekBar = document.getElementById('seekBar');
-    const currentTimeDisplay = document.getElementById('currentTime');
-    const durationDisplay = document.getElementById('duration');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const durationSpan = document.getElementById('duration');
     const currentTrackTitle = document.getElementById('currentTrackTitle');
     const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
 
-    const playIcon = playPauseButton.querySelector('.icon-play');
-    const pauseIcon = playPauseButton.querySelector('.icon-pause');
-    const themeDarkIcon = themeToggle.querySelector('.icon-theme-dark');
-    const themeLightIcon = themeToggle.querySelector('.icon-theme-light');
+    // ایجاد تگ audio به صورت داینامیک
+    const audioPlayer = new Audio();
+    audioPlayer.preload = 'auto'; // برای بارگذاری سریع‌تر
 
-    let audio = null;
     let isPlaying = false;
-    let currentTrackIndex = -1;
-    let playlist = [];
 
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = Math.floor(seconds % 60);
-        const formattedSeconds = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds;
-        return `${minutes}:${formattedSeconds}`;
-    }
+    // --- توابع کمکی ---
 
-    function setTheme(theme) {
-        if (theme === 'dark') {
-            body.setAttribute('data-theme', 'dark');
-            if (themeDarkIcon) themeDarkIcon.style.display = 'none';
-            if (themeLightIcon) themeLightIcon.style.display = 'block';
+    // فرمت زمان به صورت دقیقه:ثانیه
+    const formatTime = (seconds) => {
+        const min = Math.floor(seconds / 60);
+        const sec = Math.floor(seconds % 60);
+        return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    };
+
+    // به‌روزرسانی آیکون پخش/توقف
+    const updatePlayPauseIcon = () => {
+        const playIcon = playPauseButton.querySelector('.icon-play');
+        const pauseIcon = playPauseButton.querySelector('.icon-pause');
+        if (isPlaying) {
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'inline-block';
         } else {
-            body.removeAttribute('data-theme');
-            if (themeDarkIcon) themeDarkIcon.style.display = 'block';
-            if (themeLightIcon) themeLightIcon.style.display = 'none';
+            playIcon.style.display = 'inline-block';
+            pauseIcon.style.display = 'none';
         }
-        localStorage.setItem('playerTheme', theme);
-    }
+    };
 
-    const savedTheme = localStorage.getItem('playerTheme') || 'light';
-    setTheme(savedTheme);
+    // --- مدیریت رویدادها ---
 
-    themeToggle.addEventListener('click', () => {
-        const currentTheme = body.getAttribute('data-theme');
-        setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-    });
-
-    openFileButton.addEventListener('click', () => {
-        audioFile.click();
-    });
-
+    // 2. رویداد انتخاب فایل
     audioFile.addEventListener('change', (event) => {
-        const files = Array.from(event.target.files);
-        if (files.length > 0) {
-            playlist = files.map(file => URL.createObjectURL(file));
-            // ذخیره نام فایل‌ها برای نمایش
-            audioFile.filesForDisplay = files;
-            currentTrackIndex = 0;
-            loadTrack(currentTrackIndex);
-            event.target.value = '';
+        const file = event.target.files[0];
+        if (file) {
+            // ساخت URL برای فایل محلی
+            const fileURL = URL.createObjectURL(file);
+            audioPlayer.src = fileURL;
+            
+            // به‌روزرسانی عنوان
+            currentTrackTitle.textContent = file.name;
+
+            // فعال‌سازی اولیه و آماده‌سازی برای پخش
+            audioPlayer.load();
+            // نیازی به اجرای خودکار نیست، منتظر کلیک کاربر می‌مانیم
+            isPlaying = false;
+            updatePlayPauseIcon();
+            seekBar.value = 0;
+            currentTimeSpan.textContent = '0:00';
+            durationSpan.textContent = '0:00';
+
+            // اگر تم (Theme) شما نیاز به تغییر آیکون خورشید/ماه دارد، اینجا کد آن را اضافه کنید
         }
     });
 
-    function loadTrack(index) {
-        if (index >= 0 && index < playlist.length) {
-            const trackUrl = playlist[index];
-            // استفاده از نام فایل ذخیره شده اگر موجود باشد
-            const trackName = (audioFile.filesForDisplay && audioFile.filesForDisplay[index]) ? audioFile.filesForDisplay[index].name : `Track ${index + 1}`;
-
-            if (audio) {
-                audio.pause();
-                audio.src = '';
-                audio = null;
-            }
-
-            audio = new Audio(trackUrl);
-            currentTrackTitle.textContent = trackName;
-            isPlaying = false;
-
-            // اطمینان از وجود آیکون‌ها قبل از دسترسی
-            if (playIcon) playIcon.style.display = 'block';
-            if (pauseIcon) pauseIcon.style.display = 'none';
-            if (playPauseButton) playPauseButton.innerHTML = ''; // پاک کردن محتوای قبلی
-            if (playIcon) playPauseButton.appendChild(playIcon);
-
-            audio.addEventListener('loadedmetadata', () => {
-                durationDisplay.textContent = formatTime(audio.duration);
-                seekBar.max = audio.duration;
-            });
-
-            audio.addEventListener('timeupdate', () => {
-                if (seekBar) seekBar.value = audio.currentTime;
-                currentTimeDisplay.textContent = formatTime(audio.currentTime);
-                 // اطمینان از وجود آیکون‌ها قبل از دسترسی
-                if (!isPlaying && playIcon && pauseIcon) {
-                     playIcon.style.display = 'none';
-                     pauseIcon.style.display = 'block';
-                     if (playPauseButton) playPauseButton.innerHTML = '';
-                     if (pauseIcon) playPauseButton.appendChild(pauseIcon);
-                     isPlaying = true;
-                }
-            });
-
-            audio.addEventListener('ended', () => {
-                playNextTrack();
-            });
-
-            audio.play().then(() => {
-                // موفقیت پخش
-            }).catch(error => {
-                console.error("Autoplay failed:", error);
-                if (currentTrackTitle) currentTrackTitle.textContent = "خطا در پخش، لطفاً روی دکمه پخش بزنید.";
-                isPlaying = false;
-            });
-        } else {
-            if (currentTrackTitle) currentTrackTitle.textContent = "پلی‌لیست خالی است یا آهنگ نامعتبر.";
-            if (currentTimeDisplay) currentTimeDisplay.textContent = "0:00";
-            if (durationDisplay) durationDisplay.textContent = "0:00";
-            if (seekBar) seekBar.value = 0;
-            if (playPauseButton && playIcon) {
-                playPauseButton.innerHTML = '';
-                playIcon.style.display = 'block';
-                pauseIcon.style.display = 'none';
-                playPauseButton.appendChild(playIcon);
-            }
-            isPlaying = false;
-            playlist = [];
-            currentTrackIndex = -1;
+    // 3. رویداد پخش/توقف
+    playPauseButton.addEventListener('click', () => {
+        if (!audioPlayer.src) {
+            alert("لطفاً ابتدا یک فایل صوتی انتخاب کنید.");
+            return;
         }
-    }
+        
+        if (isPlaying) {
+            audioPlayer.pause();
+        } else {
+            audioPlayer.play().catch(error => {
+                console.error("خطا در پخش: ", error);
+                alert("پخش با خطا مواجه شد. مرورگر ممکن است اجازه پخش خودکار نداده باشد.");
+            });
+        }
+        isPlaying = !isPlaying;
+        updatePlayPauseIcon();
+    });
 
-    if (playPauseButton) {
-        playPauseButton.addEventListener('click', () => {
-            if (!audio) return;
+    // 4. به‌روزرسانی زمان و نوار پیشرفت در حین پخش
+    audioPlayer.addEventListener('timeupdate', () => {
+        if (!isNaN(audioPlayer.duration)) {
+            const percentage = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            seekBar.value = percentage;
+            currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
+        }
+    });
 
-            if (isPlaying) {
-                audio.pause();
-                if (playIcon) playIcon.style.display = 'block';
-                if (pauseIcon) pauseIcon.style.display = 'none';
-                isPlaying = false;
-            } else {
-                audio.play().then(() => {
-                    if (playIcon) playIcon.style.display = 'none';
-                    if (pauseIcon) pauseIcon.style.display = 'block';
-                    isPlaying = true;
-                }).catch(error => {
-                    console.error("Play failed:", error);
-                    if (currentTrackTitle) currentTrackTitle.textContent = "پخش امکان‌پذیر نیست. لطفاً فایل صوتی دیگری انتخاب کنید.";
-                });
-            }
-            // به‌روزرسانی نمایش آیکون‌ها
-            if (playPauseButton && pauseIcon && playIcon) {
-                playPauseButton.innerHTML = '';
-                playPauseButton.appendChild(isPlaying ? pauseIcon : playIcon);
-            }
-        });
-    }
+    // 5. تنظیم زمان از طریق نوار پیشرفت (Seek Bar)
+    seekBar.addEventListener('input', () => {
+        if (audioPlayer.duration) {
+            const newTime = (seekBar.value / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = newTime;
+        }
+    });
 
+    // 6. تعیین مدت زمان آهنگ هنگام بارگذاری متادیتا
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        if (!isNaN(audioPlayer.duration)) {
+            durationSpan.textContent = formatTime(audioPlayer.duration);
+            seekBar.max = 100; // مطمئن شدن از تنظیم درست max
+        }
+    });
+    
+    // 7. مدیریت پایان آهنگ
+    audioPlayer.addEventListener('ended', () => {
+        isPlaying = false;
+        updatePlayPauseIcon();
+        seekBar.value = 0;
+        currentTimeSpan.textContent = '0:00';
+        // اینجا می‌توانید کد پرش به آهنگ بعدی را اضافه کنید
+    });
+    
+    // 8. مدیریت دکمه‌های بعدی/قبلی (نیاز به لیست پخش دارد، فعلاً غیرفعال یا Placeholder است)
+    // (برای کامل بودن، شما باید یک آرایه از فایل‌ها داشته باشید تا این دکمه‌ها کار کنند)
+    document.getElementById('nextButton').addEventListener('click', () => {
+        // در این نسخه ساده، چیزی تغییر نمی‌کند
+        console.log("Next button clicked - requires playlist logic.");
+    });
 
-    if (seekBar) {
-        seekBar.addEventListener('input', () => {
-            if (audio) {
-                audio.currentTime = seekBar.value;
-            }
-        });
-    }
+    document.getElementById('prevButton').addEventListener('click', () => {
+        // در این نسخه ساده، چیزی تغییر نمی‌کند
+        console.log("Previous button clicked - requires playlist logic.");
+    });
 
-    function playPrevTrack() {
-        if (playlist.length === 0) return;
-        currentTrackIndex = (currentTrackIndex - 1 - playlist.length) % playlist.length;
-        loadTrack(currentTrackIndex);
-    }
-
-    function playNextTrack() {
-        if (playlist.length === 0) return;
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        loadTrack(currentTrackIndex);
-    }
-
-    if (prevButton) prevButton.addEventListener('click', playPrevTrack);
-    if (nextButton) nextButton.addEventListener('click', playNextTrack);
-
+    // 9. مدیریت تغییر تم (فقط یک نمونه ساده)
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        // در اینجا باید آیکون SVG داخل دکمه را بر اساس کلاس dark-theme تغییر دهید.
+    });
 });
