@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matin Player</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Web App Manifest for PWA installation -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- Apple Touch Icon -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- Placeholder for iOS icon, will be set in manifest -->
+</head>
+<body>
+
+    <div id="app-container">
+
+        <!-- Header (Navigation Bar Style) -->
+        <header class="app-header">
+            <div class="header-controls">
+                <!-- Placeholder for Back Button - Minimalist style -->
+                <button id="theme-toggle-btn" class="icon-btn theme-switch" aria-label="تغییر تم">
+                    <!-- Icon will be set via CSS/JS -->
+                </button>
+            </div>
+            <h1 class="app-title">Matin Player</h1>
+            <div class="header-controls">
+                <button id="file-select-btn" class="icon-btn" aria-label="انتخاب آهنگ">
+                    <!-- Icon will be set via CSS/JS -->
+                </button>
+            </div>
+        </header>
+
+        <!-- File Input (Hidden until needed) -->
+        <input type="file" id="audioFile" accept="audio/*" multiple hidden>
+
+        <!-- Main Player Content -->
+        <main class="player-content">
+
+            <!-- Album Art / Placeholder -->
+            <div class="album-art-container">
+                <img id="albumArt" src="" alt="کاور آهنگ" class="album-art">
+                <div class="placeholder-icon">🎵</div>
+            </div>
+
+            <!-- Song Info -->
+            <div class="song-info">
+                <h2 id="songTitle">هیچ فایلی انتخاب نشده است</h2>
+                <p id="artistName">Matin Player</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <input type="range" id="seekBar" min="0" max="100" value="0" step="0.1">
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="durationTime">0:00</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button id="prev-btn" class="control-btn large-btn disabled" aria-label="قبلی">
+                    <!-- Icon -->
+                </button>
+                <button id="play-pause-btn" class="control-btn play-pause" aria-label="پخش/توقف">
+                    <!-- Icon -->
+                </button>
+                <button id="next-btn" class="control-btn large-btn disabled" aria-label="بعدی">
+                    <!-- Icon -->
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer for Queue/Playlist Preview (Minimal) -->
+        <footer class="app-footer">
+            <p id="queue-status">لیست پخش: 0 آهنگ</p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
