@@ -1,140 +1,102 @@
-// =================================================================
-// Player Script - Consolidated & Refined Version
-// =================================================================
-
 // --- DOM Element Selections ---
-const audio = document.querySelector('audio') || new Audio(); // fallback in case audio tag isn't present initially
-const playPauseBtn = document.querySelector('#playPauseBtn');
-const nextBtn = document.querySelector('#nextBtn');
-const prevBtn = document.querySelector('#prevBtn');
-const playlistContainer = document.querySelector('#playlist');
-const trackTitle = document.querySelector('#trackTitle');
-// *** اصلاح کلیدی: انتخابگر آیدی به درستی روی 'audioFile' تنظیم شد ***
-const fileInput = document.querySelector('#audioFile'); 
+const audio = document.getElementById('audioElement'); 
+const playPauseBtn = document.getElementById('playPauseBtn');
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn = document.getElementById('prevBtn');
+const playlistContainer = document.getElementById('playlist');
+const trackTitle = document.getElementById('trackTitle');
+const fileInput = document.getElementById('audioFile'); // ورودی فایل مخفی
 
 let playlist = [];
-let currentTrackIndex = -1; // -1 indicates no track loaded yet
+let currentTrackIndex = -1;
 
 // --- Helper Functions ---
-
-// Function to format time (seconds to MM:SS)
-function formatTime(seconds) {
-    if (isNaN(seconds) || seconds < 0) return '00:00';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-}
-
-// Function to update the playlist UI
 function updatePlaylistUI() {
     if (!playlistContainer) return;
     playlistContainer.innerHTML = ''; 
+    if (playlist.length === 0) {
+         playlistContainer.innerHTML = '<li style="color: #888;">(لیست خالی است)</li>';
+         return;
+    }
     playlist.forEach((track, index) => {
         const li = document.createElement('li');
         li.textContent = `${index + 1}. ${track.name}`;
-        li.dataset.index = index;
         if (index === currentTrackIndex) {
             li.classList.add('active'); 
         }
-        // Use an anonymous function wrapper for index passing
         li.addEventListener('click', () => loadTrack(index));
         playlistContainer.appendChild(li);
     });
 }
 
-// Function to load a track by index
 function loadTrack(index) {
-    if (index < 0 || index >= playlist.length) {
-        console.error("Track index out of bounds.");
-        return;
-    }
+    if (index < 0 || index >= playlist.length) return;
 
     currentTrackIndex = index;
     const track = playlist[index];
 
     if (audio) {
-        // Revoke previous object URL
-        if (audio.src && audio.src.startsWith('blob:')) {
-             URL.revokeObjectURL(audio.src);
-        }
+        // پاکسازی URL قدیمی
+        if (audio.src && audio.src.startsWith('blob:')) URL.revokeObjectURL(audio.src);
         
         audio.src = track.url;
         if(trackTitle) trackTitle.textContent = track.name;
         audio.load();
 
-        // Attempt to play
-        const playPromise = audio.play();
-
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                if (playPauseBtn) playPauseBtn.textContent = 'Pause';
-            }).catch(error => {
-                // Autoplay blocked: user must click play button later
-                if (playPauseBtn) playPauseBtn.textContent = 'Play';
-            });
-        }
+        // تلاش برای پخش خودکار
+        audio.play().then(() => {
+             if (playPauseBtn) playPauseBtn.textContent = 'Pause';
+        }).catch(error => {
+            // اگر پخش به دلیل سیاست‌های مرورگر مسدود شد
+            if (playPauseBtn) playPauseBtn.textContent = 'Play (کلیک کنید)';
+        });
     }
     updatePlaylistUI();
 }
 
-// Function to load the current track based on currentTrackIndex
-function loadCurrentTrack() {
+function nextTrack() {
+    if (playlist.length === 0) return;
+    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
     loadTrack(currentTrackIndex);
 }
 
-// Function to toggle play/pause
-function togglePlayPause() {
+function prevTrack() {
+    if (playlist.length === 0) return;
+    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    loadTrack(currentTrackIndex);
+}
+
+// *** این تابع مستقیماً روی ورودی فایل مخفی کلیک می کند ***
+function triggerFileInput() {
+    if (fileInput) {
+        fileInput.click(); 
+    }
+}
+
+
+// --- Event Listeners ---
+if (playPauseBtn) playPauseBtn.addEventListener('click', () => {
     if (!audio || playlist.length === 0) return;
     if (audio.paused) {
         audio.play().then(() => {
-            if (playPauseBtn) playPauseBtn.textContent = 'Pause';
-        }).catch(_ => { /* Handle blocked play */ });
+             if (playPauseBtn) playPauseBtn.textContent = 'Pause';
+        }).catch(_ => { /* مدیریت خطای پخش */ });
     } else {
         audio.pause();
         if (playPauseBtn) playPauseBtn.textContent = 'Play';
     }
-}
-
-// Function to play the next track
-function nextTrack() {
-    if (playlist.length === 0) return;
-    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-    loadCurrentTrack();
-}
-
-// Function to play the previous track
-function prevTrack() {
-    if (playlist.length === 0) return;
-    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-    loadCurrentTrack();
-}
-
-// --- File Input Trigger Function (For HTML Button Call) ---
-function triggerFileInput() {
-    if (fileInput) {
-        fileInput.click(); // This forcibly opens the file selection dialog
-    } else {
-        console.error("Error: File Input element with ID 'audioFile' not found.");
-    }
-}
-
-
-// --- Event Listeners for Player Controls ---
-if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+});
 if (nextBtn) nextBtn.addEventListener('click', nextTrack);
 if (prevBtn) prevBtn.addEventListener('click', prevTrack);
+if (audio) audio.addEventListener('ended', nextTrack); 
 
-if (audio) {
-    audio.addEventListener('ended', nextTrack); 
-}
-
-// --- File Input Handling ---
+// --- File Input Handling (زمانی که فایل انتخاب می شود) ---
 if (fileInput) {
     fileInput.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Cleanup previous files' URLs
+        // پاکسازی لیست قدیمی
         playlist.forEach(track => {
             if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
         });
@@ -144,35 +106,29 @@ if (fileInput) {
         files.filter(file => file.type.startsWith('audio/')).forEach(file => {
             playlist.push({
                 name: file.name,
-                url: URL.createObjectURL(file), 
-                duration: 0
+                url: URL.createObjectURL(file), // ساخت URL برای فایل
             });
         });
 
         if (playlist.length > 0) {
             currentTrackIndex = 0;
-            loadCurrentTrack();
+            loadTrack(0);
         } else {
-            if(trackTitle) trackTitle.textContent = "No valid audio files were selected.";
+            if(trackTitle) trackTitle.textContent = "فایلی بارگذاری نشده است...";
         }
         updatePlaylistUI();
     });
-} else {
-    console.error("FATAL ERROR: File input element with ID 'audioFile' not found in HTML.");
 }
 
-// --- Initialization ---
-function initializePlayer() {
-    if (playPauseBtn) playPauseBtn.textContent = 'Play';
-    if (trackTitle) trackTitle.textContent = 'Ready to load audio';
-    updatePlaylistUI();
-}
-
-document.addEventListener('DOMContentLoaded', initializePlayer);
-
-// Cleanup on window close
+// --- Cleanup on window close (برای جلوگیری از Memory Leak) ---
 window.addEventListener('beforeunload', () => {
     playlist.forEach(track => {
         if (track.url && track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
     });
+});
+
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    if (playPauseBtn) playPauseBtn.textContent = 'Play';
+    updatePlaylistUI();
 });
