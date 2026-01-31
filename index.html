@@ -1,67 +1,236 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matin Player</title>
-    <link rel="stylesheet" href="style.css">
+    <title>پخش کننده صوتی پیشرفته</title>
+    <style>
+        /* کدهای CSS اولیه (برای حالت عادی) - باید با CSS حالت دارک ترکیب شوند */
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .player-container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+        /* --- بخش انتخاب فایل --- */
+        .file-input-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        #audioFile {
+            display: none; /* ورودی فایل مخفی می‌شود */
+        }
+        .custom-file-upload {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #0056b3;
+        }
+        /* --- بخش کنترل پلیر --- */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        .player-button svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor; /* رنگ‌بندی بر اساس رنگ متن اصلی */
+        }
+        #playPauseButton {
+            background-color: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #playPauseButton:hover {
+            background-color: #1e7e34;
+        }
+        #seekBar {
+            flex-grow: 1;
+            margin: 0 15px;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+        }
+        #seekBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+        /* --- بخش لیست پخش --- */
+        .playlist-section {
+            margin-top: 20px;
+        }
+        #playlistContainer {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eeeeee;
+            border-radius: 8px;
+        }
+        .playlist-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .playlist-item:last-child {
+            border-bottom: none;
+        }
+        .playlist-item:hover {
+            background-color: #f9f9f9;
+        }
+        .playlist-item.active {
+            background-color: #e0f0ff;
+            color: #0056b3;
+            font-weight: bold;
+        }
+    </style>
+    <!-- ترکیب CSS حالت دارک در اینجا -->
+    <style id="dark-mode-styles">
+        body.dark-theme {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        body.dark-theme .player-container {
+            background-color: #1e1e1e;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        body.dark-theme h1 {
+            color: #4da6ff;
+        }
+        body.dark-theme .custom-file-upload {
+            background-color: #4da6ff;
+        }
+        body.dark-theme .custom-file-upload:hover {
+            background-color: #358bde;
+        }
+        body.dark-theme #seekBar {
+            background: #444;
+        }
+        body.dark-theme #seekBar::-webkit-slider-thumb {
+            background: #4da6ff;
+        }
+        body.dark-theme .playlist-item:hover {
+            background-color: #2c2c2c;
+        }
+        body.dark-theme .playlist-item.active {
+            background-color: #355a80;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
-    <div class="player-container">
-        <header>
-            <h2>Matin Player</h2>
-            <button class="theme-toggle-button" id="themeToggle" aria-label="تغییر تم">
-                <svg class="icon-theme-dark" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-15c-3.314 0-6 2.686-6 6s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm0 10c-1.654 0-3-1.346-3-3s1.346-3 3-3 3 1.346 3 3-1.346 3-3 3z"/>
-                </svg>
-            </button>
-        </header>
 
-        <div class="track-info">
-            <div id="currentTrackTitle">هیچ آهنگی انتخاب نشده است</div>
+    <h1>پخش کننده صوتی</h1>
+
+    <div class="player-container">
+        
+        <!-- بخش انتخاب فایل -->
+        <div class="file-input-section">
+            <label for="audioFile" class="custom-file-upload">
+                انتخاب فایل صوتی (یا چند فایل)
+            </label>
+            <!-- اصلاح شده: استفاده از accept برای محدود کردن فرمت‌ها و label برای فعال‌سازی -->
+            <input type="file" id="audioFile" accept="audio/mp3, audio/wav, audio/ogg, audio/flac, audio/aac" multiple>
         </div>
 
-        <div class="progress-section">
-            <input type="range" id="seekBar" value="0" min="0" max="100">
-            <div class="time-display">
-                <span id="currentTime">0:00</span>
-                <span id="duration">0:00</span>
+        <!-- بخش اطلاعات و کنترل‌های اصلی -->
+        <div class="track-info">
+            <p><strong>آهنگ فعلی:</strong> <span id="currentTrackTitle">هیچ آهنگی انتخاب نشده است</span></p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group time-display">
+                <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+            </div>
+
+            <div class="control-group buttons">
+                <button id="prevButton" class="player-button" title="آهنگ قبلی">
+                    <svg><!-- آیکون قبلی (باید با SVG واقعی جایگزین شود) --><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 13z"/></svg>
+                </button>
+                
+                <button id="playPauseButton" title="پخش/توقف">
+                    <!-- آیکون‌ها به صورت پیش‌فرض در CSS/JS مدیریت می‌شوند، اینجا جایگاه آن‌هاست -->
+                    <span class="icon-play" style="display: inline-block;">▶</span> 
+                    <span class="icon-pause" style="display: none;">❚❚</span>
+                </button>
+
+                <button id="nextButton" class="player-button" title="آهنگ بعدی">
+                    <svg><!-- آیکون بعدی (باید با SVG واقعی جایگزین شود) --><path d="M8.59 16.41L10 17.83l6-6-6-6L8.59 7.59 13.17 12z"/></svg>
+                </button>
+            </div>
+
+            <div class="control-group theme-and-seek">
+                 <!-- دکمه تم -->
+                <button id="themeToggle" class="player-button" title="تغییر تم">
+                    <!-- آیکون واقعی خورشید/ماه باید جایگزین شود -->
+                    <svg viewBox="0 0 24 24" width="24" height="24"><!-- نماد کلی تم --><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM18.988 5.488a.75.75 0 010 1.06l-1.59 1.59a.75.75 0 11-1.06-1.06l1.59-1.59a.75.75 0 011.06 0zM21.75 11.25a.75.75 0 010 1.5H19.5a.75.75 0 010-1.5h2.25zM18.988 17.452a.75.75 0 01-1.06 1.06l-1.59-1.59a.75.75 0 111.06-1.06l1.59 1.59a.75.75 0 010 1.06zM12 18.75a.75.75 0 01-.75.75H9.75a.75.75 0 010-1.5h1.5a.75.75 0 01.75.75zM5.012 17.452a.75.75 0 010 1.06l-1.59 1.59a.75.75 0 11-1.06-1.06l1.59-1.59a.75.75 0 011.06 0zM3.25 12a.75.75 0 010-1.5H1.5a.75.75 0 010 1.5h1.75zM5.012 5.488a.75.75 0 011.06 1.06l-1.59 1.59a.75.75 0 11-1.06-1.06l1.59-1.59a.75.75 0 011.06 0zM12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z"/></svg>
+                </button>
+                
             </div>
         </div>
 
-        <div class="controls">
-            <button class="control-button" id="prevButton" aria-label="قبلی">
-                <svg class="icon-prev" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 18.1V5.9c0-0.7 0.8-1.2 1.5-0.8l5.9 5.1c0.4 0.3 0.4 0.9 0 1.2l-5.9 5.1c-0.7 0.4-1.5-0.1-1.5-0.8zm-10 0V5.9c0-0.7 0.8-1.2 1.5-0.8l5.9 5.1c0.4 0.3 0.4 0.9 0 1.2l-5.9 5.1c-0.7 0.4-1.5-0.1-1.5-0.8z"/>
-                </svg>
-            </button>
-            <button class="play-pause-button" id="playPauseButton" aria-label="پخش/توقف">
-                <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 6.827v10.347c0 0.791 0.874 1.312 1.565 0.874l8.325-5.173c0.647-0.403 0.647-1.293 0-1.696L9.565 5.953C8.874 5.521 8 6.034 8 6.827z"/>
-                </svg>
-                 <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                    <path d="M9 20c0 1.105-0.895 2-2 2s-2-0.895-2-2V4c0-1.105 0.895-2 2-2s2 0.895 2 2V20zM17 4c0-1.105-0.895-2-2-2s-2 0.895-2 2v16c0 1.105 0.895 2 2 2s2-0.895 2-2V4z"/>
-                </svg>
-            </button>
-            <button class="control-button" id="nextButton" aria-label="بعدی">
-                <svg class="icon-next" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M7.5 18.1V5.9c0-0.7-0.8-1.2-1.5-0.8L0.8 10.9c-0.4 0.3-0.4 0.9 0 1.2L6 19.7c0.7 0.4 1.5-0.1 1.5-0.8zM19.5 18.1V5.9c0-0.7-0.8-1.2-1.5-0.8L12.8 10.9c-0.4 0.3-0.4 0.9 0 1.2L18 19.7c0.7 0.4 1.5-0.1 1.5-0.8z"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="file-input-section">
-            <label for="audioFile" class="action-button">
-                <svg class="icon-upload" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.4 15.37a1.5 1.5 0 0 0-1.5 1.5v3.71a1.5 1.5 0 0 1-1.5 1.5H6.6a1.5 1.5 0 0 1-1.5-1.5V16.87a1.5 1.5 0 0 0-3 0v3.71a4.5 4.5 0 0 0 4.5 4.5h9.8a4.5 4.5 0 0 0 4.5-4.5v-3.71a1.5 1.5 0 0 0-1.5-1.5zm-7.9 1.03a1.5 1.5 0 0 0 1.5 1.5h4.5a1.5 1.5 0 0 0 0-3h-4.5a1.5 1.5 0 0 0-1.5 1.5zm2.6-7.15a1.5 1.5 0 0 0-1.5-1.5h-4.5a1.5 1.5 0 0 0 0 3h4.5a1.5 1.5 0 0 0 1.5-1.5zm-6.5 3.5a1.5 1.5 0 0 0-1.5 1.5v3.71a1.5 1.5 0 0 0 1.5 1.5h6.9a1.5 1.5 0 0 0 1.5-1.5v-3.71a1.5 1.5 0 0 0-1.5-1.5H7.5z"/>
-                </svg>
-                <span>انتخاب فایل صوتی</span>
-            </label>
-            <!-- ورودی فایل مخفی با accept اصلاح شده -->
-            <input type="file" id="audioFile" accept="audio/mpeg, audio/wav, audio/ogg, audio/aac, audio/flac" style="display: none;">
-        </div>
+        <!-- نوار پیشرفت -->
+        <input type="range" id="seekBar" value="0" min="0" max="100">
     </div>
 
+    <!-- بخش لیست پخش -->
+    <div class="playlist-section">
+        <h3>لیست پخش (Playlist)</h3>
+        <ul id="playlistContainer">
+            <!-- آیتم‌های لیست به صورت داینامیک توسط JS اضافه می‌شوند -->
+        </ul>
+        <p style="text-align: center; font-size: small; color: #777;">فایل‌های صوتی را انتخاب کنید تا به لیست اضافه شوند.</p>
+    </div>
+
+    <!-- اسکریپت باید در انتهای بادی قرار گیرد -->
     <script src="script.js"></script>
 </body>
 </html>
