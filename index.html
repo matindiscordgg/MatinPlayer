@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+      <head>
+            <meta charset="UTF-8" />
+            <meta name="google-site-verification" content="F595ySKfUheIN2ug2CMFzHeVQNsscpVcx4VcTNMiIrs" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta name="description" content="Music by Ahmad is your go-to music platform. Listen to Predefined songs" />
+            <meta name="keywords" content="musicbyahmad,naatbyahmad,ahmadkiapp,music app,online music,music streaming,gculmusic" />
+            <link href="/dist/styles.css" rel="stylesheet" />
+            <link rel="manifest" href="./manifest.json" />
+            <script type="application/ld+json">
+                  {
+                        "@context": "https://schema.org",
+                        "@type": "WebSite",
+                        "name": "Music by Ahmad",
+                        "url": "https://musicbyahmad.vercel.app"
+                  }
+            </script>
+            <title>Music by Ahmad | Listen to Music Online</title>
+      </head>
+      <body>
+            <div id="root"></div>
+            <script>
+                  if ("serviceWorker" in navigator) {
+                        window.addEventListener("load", () => {
+                              navigator.serviceWorker
+                                    .register("./serviceworker.js")
+                                    .then((reg) => console.log("Success: ", reg.scope))
+                                    .catch((err) => console.log(err.message));
+                        });
+                  }
+            </script>
+            <script type="module" src="/src/main.jsx"></script>
+      </body>
+</html>
